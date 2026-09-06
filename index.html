@@ -15,14 +15,14 @@
         /* 상단 타이틀 영역 */
         .app-header { background: #0f172a; color: white; padding: 15px 16px 12px 16px; font-size: 20px; font-weight: 800; text-align: center; letter-spacing: -0.5px; flex-shrink: 0; }
 
-        /* 하단 요약 카드 (기존 유지) */
+        /* 하단 요약 카드 */
         .header-card { background: #1e293b; color: white; padding: 6px 12px 12px 12px; border-top: 1px solid #334155; flex-shrink: 0; order: 3; }
         .summary-row { display: flex; justify-content: space-between; align-items: center; background: #0f172a; padding: 6px 12px; border-radius: 8px; border: 1px solid #334155; }
         .summary-item label { font-size: 10px; color: #94a3b8; display: block; }
         .summary-item val { font-size: 13px; font-weight: 700; color: #38bdf8; }
         .summary-item val.pay { color: #4ade80; }
 
-        /* 달력 높이를 너무 좁지 않게(약 390px) 조정하여 날짜 칸 찌그러짐 방지 */
+        /* 달력 영역 */
         .calendar-wrapper { flex: 0 0 auto; height: 600px; background: #ffffff; display: flex; flex-direction: column; border-top-left-radius: 16px; border-top-right-radius: 16px; overflow: hidden; box-shadow: 0 -4px 20px rgba(0,0,0,0.15); min-height: 0; order: 1; }
         
         .calendar-nav { display: flex; justify-content: space-between; align-items: center; padding: 6px 16px 4px 16px; flex-shrink: 0; }
@@ -50,7 +50,6 @@
         .day-cell.selected { background: #e0f2fe; }
         .day-cell.selected .day-number { color: #0369a1; font-weight: 800; }
 
-        /* 공휴일 이름 글자 크기 기존 7px -> 9px로 키움 */
         .holiday-name { font-size: 9px; color: #ef4444; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding: 0 1px; letter-spacing: -0.5px; }
         .work-badge { font-size: 10px; font-weight: 700; background: #dcfce7; color: #15803d; padding: 1px 0; border-radius: 2px; text-align: center; width: 100%; }
         
@@ -73,7 +72,7 @@
         .calendar-bottom-info { padding: 4px 12px; font-size: 15px; font-weight: 700; color: #0369a1; background: #ffffff; display: flex; align-items: center; gap: 6px; min-height: 24px; max-height: 24px; border-top: 1px solid #f1f5f9; flex-shrink: 0; }
         .calendar-bottom-info span { color: #334155; font-weight: 600; font-size: 15px; }
 
-        /* 액션 버튼 패널 (기존 유지) */
+        /* 액션 버튼 패널 */
         .action-panel { background: #1e293b; padding: 8px 12px 12px 12px; display: flex; flex-direction: column; gap: 6px; flex-shrink: 0; order: 2; }
         .button-group { display: grid; grid-template-columns: 2fr 2fr 2fr 1fr; gap: 6px; align-items: center; }
         .action-btn { background: #334155; color: white; border: none; padding: 9px 0; border-radius: 6px; font-size: 13px; font-weight: 700; cursor: pointer; text-align: center; }
@@ -92,9 +91,8 @@
         .modal-content h3 { font-size: 15px; color: #38bdf8; margin-bottom: 2px; }
         
         .modal-input-row { display: flex; gap: 8px; align-items: center; }
-        .modal-input-row input { flex: 1; width: 0; padding: 8px; font-size: 15px; font-weight: bold; background: #0f172a; border: 1px solid #475569; color: white; border-radius: 6px; text-align: right; outline: none; }
-        .modal-input-row textarea { flex: 1; width: 0; padding: 8px; font-size: 14px; background: #0f172a; border: 1px solid #475569; color: white; border-radius: 6px; resize: none; height: 70px; outline: none; }
-        .modal-input-row button { padding: 9px 14px; background: #3b82f6; color: white; border: none; font-weight: bold; border-radius: 6px; cursor: pointer; white-space: nowrap; flex-shrink: 0; }
+        .modal-input-row input { width: 100%; padding: 10px; font-size: 16px; font-weight: bold; background: #0f172a; border: 1px solid #475569; color: white; border-radius: 6px; text-align: right; outline: none; }
+        .modal-input-row textarea { width: 100%; padding: 10px; font-size: 14px; background: #0f172a; border: 1px solid #475569; color: white; border-radius: 6px; resize: none; height: 80px; outline: none; text-align: left; }
         
         .modal-checkbox-row { display: flex; align-items: center; gap: 6px; font-size: 11px; color: #cbd5e1; }
         .modal-checkbox-row input { width: 14px; height: 14px; accent-color: #3b82f6; cursor: pointer; }
@@ -102,7 +100,9 @@
         .modal-sub-row { display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: #cbd5e1; background: #0f172a; padding: 8px 10px; border-radius: 6px; border: 1px solid #334155; }
         .modal-sub-row input { width: 110px; padding: 4px 6px; font-size: 13px; font-weight: bold; background: #1e293b; border: 1px solid #475569; color: white; border-radius: 4px; text-align: right; outline: none; }
 
-        .modal-close-btn { background: #334155; color: #94a3b8; border: none; padding: 8px; border-radius: 6px; font-size: 12px; cursor: pointer; margin-top: 2px; }
+        /* 저장 버튼 (기존 취소 버튼 위치를 대체) */
+        .modal-save-btn { background: #3b82f6; color: white; border: none; padding: 10px; border-radius: 6px; font-size: 14px; font-weight: bold; cursor: pointer; margin-top: 2px; width: 100%; }
+        .modal-save-btn:active { background: #2563eb; }
 
         .year-nav-row { display: flex; justify-content: space-between; align-items: center; background: #0f172a; padding: 6px 10px; border-radius: 6px; border: 1px solid #334155; }
         .year-nav-row button { background: #1e293b; border: 1px solid #475569; color: white; padding: 4px 10px; border-radius: 4px; font-size: 13px; font-weight: bold; cursor: pointer; }
@@ -157,7 +157,8 @@
         </div>
     </div>
 
-    <div class="modal-overlay" id="date-picker-modal">
+    <!-- 모달들: 배경 클릭 시 닫히도록 onclick 이벤트 추가 -->
+    <div class="modal-overlay" id="date-picker-modal" onclick="handleModalOutsideClick(event, 'date-picker-modal')">
         <div class="modal-content">
             <h3>날짜 선택</h3>
             <div class="year-nav-row">
@@ -180,16 +181,14 @@
                 <div class="date-picker-btn" onclick="selectMonthGrid(10)">11월</div>
                 <div class="date-picker-btn" onclick="selectMonthGrid(11)">12월</div>
             </div>
-            <button class="modal-close-btn" onclick="closeDatePickerModal()">취소</button>
         </div>
     </div>
 
-    <div class="modal-overlay" id="rate-modal">
+    <div class="modal-overlay" id="rate-modal" onclick="handleModalOutsideClick(event, 'rate-modal')">
         <div class="modal-content">
             <h3>단가 설정</h3>
             <div class="modal-input-row">
                 <input type="number" id="popup-rate-input" placeholder="금액 입력" step="10000">
-                <button onclick="saveRate()">저장</button>
             </div>
             <div class="modal-checkbox-row">
                 <input type="checkbox" id="apply-future-check">
@@ -199,47 +198,42 @@
                 <label for="popup-bonus-input">추가수당 :</label>
                 <input type="number" id="popup-bonus-input" placeholder="0" step="10000">
             </div>
-            <button class="modal-close-btn" onclick="closeRateModal()">취소</button>
+            <button class="modal-save-btn" onclick="saveRate()">저장</button>
         </div>
     </div>
 
-    <div class="modal-overlay" id="work-modal">
+    <div class="modal-overlay" id="work-modal" onclick="handleModalOutsideClick(event, 'work-modal')">
         <div class="modal-content">
             <h3>공수 설정</h3>
             <div class="modal-input-row">
                 <input type="number" id="popup-work-input" placeholder="공수 (예: 1, 1.2)" step="0.1" min="0">
-                <button onclick="saveWork()">저장</button>
             </div>
-            <button class="modal-close-btn" onclick="closeWorkModal()">취소</button>
+            <button class="modal-save-btn" onclick="saveWork()">저장</button>
         </div>
     </div>
 
-    <div class="modal-overlay" id="memo-modal">
+    <div class="modal-overlay" id="memo-modal" onclick="handleModalOutsideClick(event, 'memo-modal')">
         <div class="modal-content">
             <h3>메모 설정</h3>
-            <div class="modal-input-row" style="align-items: flex-start;">
+            <div class="modal-input-row">
                 <textarea id="popup-memo-input" placeholder="메모 내용을 입력하세요"></textarea>
-                <button onclick="saveMemo()" style="height: 70px;">저장</button>
             </div>
-            <button class="modal-close-btn" onclick="closeMemoModal()">취소</button>
+            <button class="modal-save-btn" onclick="saveMemo()">저장</button>
         </div>
     </div>
 
-    <div class="modal-overlay" id="site-modal">
+    <div class="modal-overlay" id="site-modal" onclick="handleModalOutsideClick(event, 'site-modal')">
         <div class="modal-content">
             <h3>현장 설정</h3>
             <div class="modal-input-row">
-                <input type="text" id="popup-site-input" placeholder="현장 이름 입력" style="text-align: left; padding: 9px;">
-                <button onclick="saveSite()">저장</button>
+                <input type="text" id="popup-site-input" placeholder="현장 이름 입력" style="text-align: left; padding: 10px;">
             </div>
-            <button class="modal-close-btn" onclick="closeSiteModal()">취소</button>
+            <button class="modal-save-btn" onclick="saveSite()">저장</button>
         </div>
     </div>
 
 <script>
-    let initialWorkData = {
-        
-    };
+    let initialWorkData = {};
 
     let todayObj = new Date();
     let currentDate = new Date(todayObj.getFullYear(), todayObj.getMonth(), 1);
@@ -277,6 +271,13 @@
             changeMonth(1);
         } else if (touchEndX > touchStartX + threshold) {
             changeMonth(-1);
+        }
+    }
+
+    // 배경 터치 시 모달 닫기 공통 함수
+    function handleModalOutsideClick(event, modalId) {
+        if (event.target.id === modalId) {
+            document.getElementById(modalId).style.display = 'none';
         }
     }
 
@@ -458,10 +459,6 @@
         document.getElementById('date-picker-modal').style.display = 'flex';
     }
 
-    function closeDatePickerModal() {
-        document.getElementById('date-picker-modal').style.display = 'none';
-    }
-
     function changePopupYear(direction) {
         tempSelectedYear += direction;
         updatePopupYearDisplay();
@@ -488,7 +485,7 @@
 
         currentDate.setFullYear(tempSelectedYear);
         currentDate.setMonth(tempSelectedMonth);
-        closeDatePickerModal();
+        document.getElementById('date-picker-modal').style.display = 'none';
         renderCalendar();
     }
 
@@ -505,10 +502,6 @@
         document.getElementById('rate-modal').style.display = 'flex';
         input.focus();
         input.select();
-    }
-
-    function closeRateModal() {
-        document.getElementById('rate-modal').style.display = 'none';
     }
 
     function saveRate() {
@@ -573,7 +566,7 @@
 
         localStorage.setItem('rateData', JSON.stringify(rateData));
         localStorage.setItem('bonusData', JSON.stringify(bonusData));
-        closeRateModal();
+        document.getElementById('rate-modal').style.display = 'none';
         renderCalendar();
     }
 
@@ -586,13 +579,13 @@
         input.focus();
         input.select();
     }
-    function closeWorkModal() { document.getElementById('work-modal').style.display = 'none'; }
+    
     function saveWork() {
         let val = parseFloat(document.getElementById('popup-work-input').value);
         if (isNaN(val) || val < 0) delete workData[selectedDateKey];
         else workData[selectedDateKey] = Math.round(val * 10) / 10;
         localStorage.setItem('workData', JSON.stringify(workData));
-        closeWorkModal();
+        document.getElementById('work-modal').style.display = 'none';
         renderCalendar();
     }
 
@@ -605,13 +598,13 @@
         input.focus();
         input.select();
     }
-    function closeMemoModal() { document.getElementById('memo-modal').style.display = 'none'; }
+    
     function saveMemo() {
         let val = document.getElementById('popup-memo-input').value.trim();
         if (val === '') delete memoData[selectedDateKey];
         else memoData[selectedDateKey] = val;
         localStorage.setItem('memoData', JSON.stringify(memoData));
-        closeMemoModal();
+        document.getElementById('memo-modal').style.display = 'none';
         renderCalendar();
     }
 
@@ -624,13 +617,13 @@
         input.focus();
         input.select();
     }
-    function closeSiteModal() { document.getElementById('site-modal').style.display = 'none'; }
+    
     function saveSite() {
         let val = document.getElementById('popup-site-input').value.trim();
         if (val === '') delete siteData[selectedDateKey];
         else siteData[selectedDateKey] = val;
         localStorage.setItem('siteData', JSON.stringify(siteData));
-        closeSiteModal();
+        document.getElementById('site-modal').style.display = 'none';
         renderCalendar();
     }
 
