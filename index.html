@@ -3,531 +3,662 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>공수 계산기</title>
+    <title>공수계산기</title>
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="공수계산기">
+    <link rel="apple-touch-icon" href="gongsu-icon.png">
     <style>
-        :root {
-            --primary-color: #2563eb;
-            --bg-color: #f8fafc;
-            --card-bg: #ffffff;
-            --text-main: #1e293b;
-            --text-sub: #64748b;
-            --border-color: #e2e8f0;
-            --accent-green: #10b981;
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; -webkit-tap-highlight-color: transparent; }
+        body { background-color: #0f172a; color: #1e293b; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+
+        .app-header { background: #0f172a; color: white; padding: 10px 16px 6px 16px; font-size: 17px; font-weight: 800; text-align: center; letter-spacing: -0.5px; }
+
+        .header-card { background: #1e293b; color: white; padding: 10px 16px; border-top: 1px solid #334155; }
+        .summary-row { display: flex; justify-content: space-between; align-items: center; background: #0f172a; padding: 8px 14px; border-radius: 8px; border: 1px solid #334155; }
+        .summary-item label { font-size: 11px; color: #94a3b8; display: block; }
+        .summary-item val { font-size: 14px; font-weight: 700; color: #38bdf8; }
+        .summary-item val.pay { color: #4ade80; }
+
+        .calendar-wrapper { flex: 1; background: #ffffff; display: flex; flex-direction: column; border-top-left-radius: 20px; border-top-right-radius: 20px; overflow: hidden; box-shadow: 0 -4px 20px rgba(0,0,0,0.15); }
+        
+        .calendar-nav { display: flex; justify-content: space-between; align-items: center; padding: 10px 20px 6px 20px; }
+        .calendar-nav-left { display: flex; align-items: center; gap: 6px; }
+        .calendar-nav-right { display: flex; align-items: center; gap: 6px; }
+        .calendar-nav button { background: #f1f5f9; border: 1px solid #cbd5e1; padding: 4px 12px; border-radius: 6px; font-size: 13px; font-weight: bold; cursor: pointer; color: #334155; }
+        #month-year { font-size: 16px; font-weight: 800; color: #0f172a; cursor: pointer; padding: 4px 8px; border-radius: 6px; transition: background 0.2s; text-align: center; }
+        #month-year:hover { background: #f1f5f9; }
+
+        .weekdays { display: grid; grid-template-columns: repeat(7, 1fr); text-align: center; font-weight: 700; font-size: 12px; padding: 0 10px 4px 10px; border-bottom: 1px solid #f1f5f9; }
+        .weekdays div:first-child { color: #ef4444; } 
+        .weekdays div:last-child { color: #3b82f6; }  
+        .weekdays div:not(:first-child):not(:last-child) { color: #64748b; }
+
+        .days-grid { display: grid; grid-template-columns: repeat(7, 1fr); grid-auto-rows: 1fr; gap: 4px; padding: 8px 10px 4px 10px; flex: 1; overflow: hidden; }
+        
+        .day-cell { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 4px 2px; display: flex; flex-direction: column; justify-content: flex-start; cursor: pointer; position: relative; overflow: hidden; }
+        .day-cell.other-month { opacity: 0.25; background: #fdfdfd; }
+        
+        .day-number-area { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px; }
+        .day-number { font-size: 13px; font-weight: 700; color: #334155; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; border-radius: 50%; }
+        
+        .day-cell.is-holiday .day-number { color: #ef4444; }
+        .day-cell.is-sat .day-number { color: #3b82f6; }
+        .day-cell.is-today .day-number { background: #fee2e2; color: #dc2626; border: 1px solid #fca5a5; }
+        .day-cell.selected { background: #e0f2fe; border-color: #38bdf8; }
+        .day-cell.selected .day-number { color: #0369a1; font-weight: 900; }
+
+        .holiday-name { font-size: 9px; color: #ef4444; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-bottom: 2px; }
+        .work-badge { font-size: 13px; font-weight: 800; background: #dcfce7; color: #15803d; padding: 2px 0; border-radius: 4px; text-align: center; margin-bottom: 2px; width: 100%; }
+        
+        /* 금액 잘림 방지를 위해 폰트 크기, 좌우 패딩 및 자간(letter-spacing) 최적화 */
+        .pay-badge { 
+            font-size: 10px; 
+            font-weight: 900; 
+            background: #f0fdf4; 
+            color: #15803d; 
+            padding: 2px 1px; 
+            border-radius: 4px; 
+            text-align: center; 
+            margin-bottom: 2px; 
+            border: 1px solid #bbf7d0; 
+            width: 100%; 
+            white-space: nowrap; 
+            letter-spacing: -0.8px; 
         }
 
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-        }
+        .memo-badge { font-size: 10px; font-weight: 600; background: #f1f5f9; color: #475569; padding: 2px 3px; border-radius: 3px; text-align: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; border: 1px solid #e2e8f0; margin-top: auto; width: 100%; }
 
-        body {
-            background-color: var(--bg-color);
-            color: var(--text-main);
-            display: flex;
-            flex-direction: column;
-            height: 100vh;
-            max-width: 480px;
-            margin: 0 auto;
-        }
+        .calendar-bottom-info { padding: 6px 14px; font-size: 14px; font-weight: 800; color: #0369a1; background: #ffffff; display: flex; align-items: center; gap: 6px; min-height: 38px; border-top: 1px solid #f1f5f9; }
+        .calendar-bottom-info span { color: #334155; font-weight: 700; font-size: 14px; }
 
-        header {
-            background: #ffffff;
-            padding: 12px 16px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid var(--border-color);
-        }
+        .action-panel { background: #1e293b; padding: 10px 16px; display: flex; flex-direction: column; gap: 8px; }
+        .button-group { display: grid; grid-template-columns: 2fr 2fr 2fr 1fr; gap: 6px; align-items: center; }
+        .action-btn { background: #334155; color: white; border: none; padding: 12px 0; border-radius: 8px; font-size: 15px; font-weight: 800; cursor: pointer; text-align: center; }
+        .action-btn:active { background: #475569; }
+        .action-btn.primary { background: #3b82f6; }
+        .action-btn.danger { background: #ef4444; }
+        .action-btn.memo { background: #475569; color: #f8fafc; }
+        .action-btn.site { background: #10b981; padding: 12px 0; font-size: 15px; }
 
-        .calendar-nav {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
+        input[type="number"]::-webkit-outer-spin-button,
+        input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+        input[type="number"] { -moz-appearance: textfield; }
 
-        .calendar-nav button {
-            background: #f1f5f9;
-            border: 1px solid var(--border-color);
-            padding: 6px 12px;
-            border-radius: 6px;
-            font-size: 14px;
-            font-weight: 600;
-            cursor: pointer;
-        }
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: none; justify-content: center; align-items: center; z-index: 1000; }
+        .modal-content { background: #1e293b; padding: 20px; border-radius: 12px; width: 310px; border: 1px solid #334155; color: white; display: flex; flex-direction: column; gap: 10px; }
+        .modal-content h3 { font-size: 15px; color: #38bdf8; margin-bottom: 2px; }
+        
+        .modal-input-row { display: flex; gap: 8px; align-items: center; }
+        .modal-input-row input { flex: 1; width: 0; padding: 8px; font-size: 15px; font-weight: bold; background: #0f172a; border: 1px solid #475569; color: white; border-radius: 6px; text-align: right; outline: none; }
+        .modal-input-row textarea { flex: 1; width: 0; padding: 8px; font-size: 14px; background: #0f172a; border: 1px solid #475569; color: white; border-radius: 6px; resize: none; height: 70px; outline: none; }
+        .modal-input-row button { padding: 9px 14px; background: #3b82f6; color: white; border: none; font-weight: bold; border-radius: 6px; cursor: pointer; white-space: nowrap; flex-shrink: 0; }
+        
+        .modal-checkbox-row { display: flex; align-items: center; gap: 6px; font-size: 11px; color: #cbd5e1; }
+        .modal-checkbox-row input { width: 14px; height: 14px; accent-color: #3b82f6; cursor: pointer; }
 
-        .calendar-nav h2 {
-            font-size: 18px;
-            font-weight: 700;
-        }
+        .modal-sub-row { display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: #cbd5e1; background: #0f172a; padding: 8px 10px; border-radius: 6px; border: 1px solid #334155; }
+        .modal-sub-row input { width: 110px; padding: 4px 6px; font-size: 13px; font-weight: bold; background: #1e293b; border: 1px solid #475569; color: white; border-radius: 4px; text-align: right; outline: none; }
 
-        /* 캘린더 그리드 */
-        .calendar-container {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            background: #ffffff;
-            overflow-y: auto;
-            padding: 8px;
-        }
+        .modal-close-btn { background: #334155; color: #94a3b8; border: none; padding: 8px; border-radius: 6px; font-size: 12px; cursor: pointer; margin-top: 2px; }
 
-        .weekdays {
-            display: grid;
-            grid-template-columns: repeat(7, 1fr);
-            text-align: center;
-            font-weight: 600;
-            font-size: 13px;
-            color: var(--text-sub);
-            padding-bottom: 8px;
-            border-bottom: 1px solid var(--border-color);
-        }
+        .year-nav-row { display: flex; justify-content: space-between; align-items: center; background: #0f172a; padding: 6px 10px; border-radius: 6px; border: 1px solid #334155; }
+        .year-nav-row button { background: #1e293b; border: 1px solid #475569; color: white; padding: 4px 10px; border-radius: 4px; font-size: 13px; font-weight: bold; cursor: pointer; }
+        #popup-year-display { font-size: 15px; font-weight: 800; color: #38bdf8; text-align: center; flex: 1; }
 
-        .weekdays div:first-child { color: #ef4444; } /* 일요일 */
-        .weekdays div:last-child { color: #3b82f6; }  /* 토요일 */
-
-        .days-grid {
-            display: grid;
-            grid-template-columns: repeat(7, 1fr);
-            grid-auto-rows: minmax(70px, 1fr);
-            gap: 2px;
-            background: var(--border-color);
-            border-bottom: 1px solid var(--border-color);
-        }
-
-        .day-cell {
-            background: #ffffff;
-            padding: 4px 2px;
-            display: flex;
-            flex-direction: column;
-            justify-content: flex-start;
-            align-items: center;
-            cursor: pointer;
-            position: relative;
-            min-height: 75px;
-        }
-
-        .day-cell.other-month {
-            color: #cbd5e1;
-            background: #fafafa;
-        }
-
-        .day-number {
-            font-size: 12px;
-            font-weight: 600;
-            margin-bottom: 2px;
-            width: 100%;
-            text-align: center;
-        }
-
-        .day-cell:nth-child(7n+1) .day-number { color: #ef4444; }
-        .day-cell:nth-child(7n) .day-number { color: #3b82f6; }
-        .day-cell.other-month:nth-child(7n+1) .day-number,
-        .day-cell.other-month:nth-child(7n) .day-number { color: #e2e8f0; }
-
-        .day-content {
-            width: 100%;
-            display: flex;
-            flex-direction: column;
-            gap: 1px;
-            align-items: center;
-        }
-
-        /* 공수/금액 뱃지 스타일 (잘림 방지 위해 패딩 및 폰트 미세 조정) */
-        .badge-gongsu {
-            background-color: #d1fae5;
-            color: #065f46;
-            font-size: 11px;
-            font-weight: 700;
-            padding: 1px 3px;
-            border-radius: 4px;
-            text-align: center;
-            width: 100%;
-        }
-
-        .badge-amount {
-            background-color: var(--accent-green);
-            color: #ffffff;
-            font-size: 10px;
-            font-weight: 600;
-            padding: 1px 2px;
-            border-radius: 4px;
-            text-align: center;
-            width: 100%;
-            white-space: nowrap;
-            letter-spacing: -0.5px; /* 긴 금액 압축 표시 */
-        }
-
-        .day-cell.selected {
-            border: 2px solid var(--primary-color);
-            z-index: 2;
-        }
-
-        /* 하단 요약 및 컨트롤 패널 */
-        .control-panel {
-            background: #ffffff;
-            padding: 12px 16px;
-            border-top: 1px solid var(--border-color);
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-
-        .current-site-info {
-            font-size: 13px;
-            color: var(--text-sub);
-            font-weight: 500;
-        }
-
-        .action-buttons {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 6px;
-        }
-
-        .action-buttons button {
-            padding: 10px 0;
-            border: none;
-            border-radius: 8px;
-            font-size: 13px;
-            font-weight: 600;
-            cursor: pointer;
-            color: #ffffff;
-        }
-
-        .btn-gongsu { background-color: var(--primary-color); }
-        .btn-danga { background-color: #ef4444; }
-        .btn-memo { background-color: #475569; }
-        .btn-site { background-color: var(--accent-green); }
-
-        .summary-bar {
-            background: #1e293b;
-            color: #ffffff;
-            padding: 12px 16px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-size: 14px;
-            font-weight: 600;
-        }
-
-        .summary-bar span:last-child {
-            color: #34d399;
-            font-size: 16px;
-        }
-
-        /* 모달 스타일 */
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.5);
-            justify-content: center;
-            align-items: center;
-            z-index: 100;
-        }
-
-        .modal.active { display: flex; }
-
-        .modal-content {
-            background: #ffffff;
-            padding: 20px;
-            border-radius: 12px;
-            width: 85%;
-            max-width: 320px;
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
-
-        .modal-content h3 { font-size: 16px; margin-bottom: 4px; }
-        .modal-content input {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid var(--border-color);
-            border-radius: 6px;
-            font-size: 15px;
-        }
-
-        .modal-buttons {
-            display: flex;
-            gap: 8px;
-            margin-top: 4px;
-        }
-
-        .modal-buttons button {
-            flex: 1;
-            padding: 10px;
-            border: none;
-            border-radius: 6px;
-            font-weight: 600;
-            cursor: pointer;
-        }
-
-        .btn-cancel { background: #e2e8f0; color: var(--text-main); }
-        .btn-save { background: var(--primary-color); color: #ffffff; }
+        .date-picker-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin: 6px 0; }
+        .date-picker-btn { background: #0f172a; border: 1px solid #475569; color: white; padding: 10px 0; border-radius: 6px; font-size: 14px; font-weight: bold; cursor: pointer; text-align: center; }
+        .date-picker-btn:active, .date-picker-btn.selected { background: #3b82f6; border-color: #3b82f6; }
     </style>
 </head>
 <body>
 
-    <header>
-        <div class="calendar-nav">
-            <button onclick="changeMonth(-1)">&lt; 이전</button>
-            <h2 id="monthTitle">2026년 7월</h2>
-            <button onclick="changeMonth(1)">다음 &gt;</button>
-        </div>
-        <button onclick="goToday()" style="background:#f1f5f9; border:1px solid var(--border-color); padding:6px 10px; border-radius:6px; font-size:13px; cursor:pointer;">오늘</button>
-    </header>
+    <div class="app-header">공수 계산기</div>
 
-    <div class="calendar-container">
+    <div class="calendar-wrapper">
+        <div class="calendar-nav">
+            <div class="calendar-nav-left">
+                <button onclick="changeMonth(-1)">◀ 이전</button>
+            </div>
+            <div style="flex: 1; display: flex; justify-content: center;">
+                <span id="month-year" onclick="openDatePickerModal()">2026년 7월</span>
+            </div>
+            <div class="calendar-nav-right">
+                <button onclick="goToToday()">오늘</button>
+                <button onclick="changeMonth(1)">다음 ▶</button>
+            </div>
+        </div>
+
         <div class="weekdays">
             <div>일</div><div>월</div><div>화</div><div>수</div><div>목</div><div>금</div><div>토</div>
         </div>
-        <div class="days-grid" id="daysGrid">
-            <!-- 달력 날짜 동적 생성 -->
+
+        <div id="days-container" class="days-grid"></div>
+
+        <div class="calendar-bottom-info" id="calendar-bottom-info">
+            <span>현장 :</span> 선택된 날짜가 없습니다.
         </div>
     </div>
 
-    <div class="control-panel">
-        <div class="current-site-info" id="currentSiteDisplay">현장 : (입력된 현장 없음)</div>
-        <div class="action-buttons">
-            <button class="btn-gongsu" onclick="openGongsuModal()">공수</button>
-            <button class="btn-danga" onclick="openDangaModal()">단가</button>
-            <button class="btn-memo" onclick="openMemoModal()">메모</button>
-            <button class="btn-site" onclick="openSiteModal()">현장</button>
+    <div class="action-panel">
+        <div class="button-group">
+            <button class="action-btn primary" onclick="openWorkModal()">공수</button>
+            <button class="action-btn danger" onclick="openRateModal()">단가</button>
+            <button class="action-btn memo" onclick="openMemoModal()">메모</button>
+            <button class="action-btn site" onclick="openSiteModal()">현장</button>
         </div>
     </div>
 
-    <div class="summary-bar">
-        <span>이번 달 누적 공수 <strong id="totalGongsu">0.0</strong> 공수</span>
-        <span>예상 총 급여 <strong id="totalSalary">0 원</strong></span>
-    </div>
-
-    <!-- 공수 입력 모달 -->
-    <div class="modal" id="gongsuModal">
-        <div class="modal-content">
-            <h3>공수 입력</h3>
-            <input type="number" id="gongsuInput" step="0.1" placeholder="예: 1.0, 1.5">
-            <div class="modal-buttons">
-                <button class="btn-cancel" onclick="closeModals()">취소</button>
-                <button class="btn-save" onclick="saveGongsu()">저장</button>
+    <div class="header-card">
+        <div class="summary-row">
+            <div class="summary-item">
+                <label>이번 달 누적 공수</label>
+                <val id="total-man-days">0.0 공수</val>
+            </div>
+            <div class="summary-item" style="text-align: right;">
+                <label>예상 총 급여</label>
+                <val class="pay" id="total-pay">0 원</val>
             </div>
         </div>
     </div>
 
-    <!-- 단가 입력 모달 -->
-    <div class="modal" id="dangaModal">
+    <div class="modal-overlay" id="date-picker-modal">
         <div class="modal-content">
-            <h3>단가 입력 (원)</h3>
-            <input type="number" id="dangaInput" placeholder="예: 160000">
-            <div class="modal-buttons">
-                <button class="btn-cancel" onclick="closeModals()">취소</button>
-                <button class="btn-save" onclick="saveDanga()">저장</button>
+            <h3>날짜 선택</h3>
+            <div class="year-nav-row">
+                <button onclick="changePopupYear(-1)">◀ 이전</button>
+                <span id="popup-year-display">2026년</span>
+                <button onclick="changePopupYear(1)">다음 ▶</button>
             </div>
+            <div style="font-size: 12px; color: #94a3b8; margin-top: 4px;">월 선택</div>
+            <div class="date-picker-grid" id="month-select-grid">
+                <div class="date-picker-btn" onclick="selectMonthGrid(0)">1월</div>
+                <div class="date-picker-btn" onclick="selectMonthGrid(1)">2월</div>
+                <div class="date-picker-btn" onclick="selectMonthGrid(2)">3월</div>
+                <div class="date-picker-btn" onclick="selectMonthGrid(3)">4월</div>
+                <div class="date-picker-btn" onclick="selectMonthGrid(4)">5월</div>
+                <div class="date-picker-btn" onclick="selectMonthGrid(5)">6월</div>
+                <div class="date-picker-btn" onclick="selectMonthGrid(6)">7월</div>
+                <div class="date-picker-btn" onclick="selectMonthGrid(7)">8월</div>
+                <div class="date-picker-btn" onclick="selectMonthGrid(8)">9월</div>
+                <div class="date-picker-btn" onclick="selectMonthGrid(9)">10월</div>
+                <div class="date-picker-btn" onclick="selectMonthGrid(10)">11월</div>
+                <div class="date-picker-btn" onclick="selectMonthGrid(11)">12월</div>
+            </div>
+            <button class="modal-close-btn" onclick="closeDatePickerModal()">취소</button>
         </div>
     </div>
 
-    <script>
-        let currentDate = new Date(2026, 6, 1); // 기본 2026년 7월
-        let selectedDateStr = null;
-        let workData = JSON.parse(localStorage.getItem('workData')) || {};
-        let dangaData = JSON.parse(localStorage.getItem('dangaData')) || {};
+    <div class="modal-overlay" id="rate-modal">
+        <div class="modal-content">
+            <h3>단가 설정</h3>
+            <div class="modal-input-row">
+                <input type="number" id="popup-rate-input" placeholder="금액 입력" step="10000">
+                <button onclick="saveRate()">저장</button>
+            </div>
+            <div class="modal-checkbox-row">
+                <input type="checkbox" id="apply-future-check">
+                <label for="apply-future-check">이후 이번달 단가 모두 변경</label>
+            </div>
+            <div class="modal-sub-row">
+                <label for="popup-bonus-input">추가수당 :</label>
+                <input type="number" id="popup-bonus-input" placeholder="0" step="10000">
+            </div>
+            <button class="modal-close-btn" onclick="closeRateModal()">취소</button>
+        </div>
+    </div>
 
-        function initCalendar() {
-            const year = currentDate.getFullYear();
-            const month = currentDate.getMonth();
-            
-            document.getElementById('monthTitle').innerText = `${year}년 ${month + 1}월`;
+    <div class="modal-overlay" id="work-modal">
+        <div class="modal-content">
+            <h3>공수 설정</h3>
+            <div class="modal-input-row">
+                <input type="number" id="popup-work-input" placeholder="공수 (예: 1, 1.2)" step="0.1" min="0">
+                <button onclick="saveWork()">저장</button>
+            </div>
+            <button class="modal-close-btn" onclick="closeWorkModal()">취소</button>
+        </div>
+    </div>
 
-            const firstDayIndex = new Date(year, month, 1).getDay();
-            const lastDay = new Date(year, month + 1, 0).getDate();
-            const prevLastDay = new Date(year, month, 0).getDate();
+    <div class="modal-overlay" id="memo-modal">
+        <div class="modal-content">
+            <h3>메모 설정</h3>
+            <div class="modal-input-row" style="align-items: flex-start;">
+                <textarea id="popup-memo-input" placeholder="메모 내용을 입력하세요"></textarea>
+                <button onclick="saveMemo()" style="height: 70px;">저장</button>
+            </div>
+            <button class="modal-close-btn" onclick="closeMemoModal()">취소</button>
+        </div>
+    </div>
 
-            const grid = document.getElementById('daysGrid');
-            grid.innerHTML = '';
+    <div class="modal-overlay" id="site-modal">
+        <div class="modal-content">
+            <h3>현장 설정</h3>
+            <div class="modal-input-row">
+                <input type="text" id="popup-site-input" placeholder="현장 이름 입력" style="text-align: left; padding: 9px;">
+                <button onclick="saveSite()">저장</button>
+            </div>
+            <button class="modal-close-btn" onclick="closeSiteModal()">취소</button>
+        </div>
+    </div>
 
-            let totalCellsCount = 42; // 6주 고정 그리드
-            let dayCount = 1;
-            let nextMonthDayCount = 1;
+<script>
+    let initialWorkData = {
+        "2026-07-16": 1,
+        "2026-07-17": 1.3,
+        "2026-07-20": 1.1,
+        "2026-07-21": 1.1,
+        "2026-07-22": 1,
+        "2026-07-23": 1,
+        "2026-07-24": 0.5
+    };
 
-            for (let i = 0; i < totalCellsCount; i++) {
-                const cell = document.createElement('div');
-                cell.className = 'day-cell';
+    let todayObj = new Date();
+    let currentDate = new Date(todayObj.getFullYear(), todayObj.getMonth(), 1);
 
-                let cellDateStr = '';
-                let dYear = year, dMonth = month, dDay = 0;
+    let workData = JSON.parse(localStorage.getItem('workData')) || initialWorkData;
+    let rateData = JSON.parse(localStorage.getItem('rateData')) || {};
+    let bonusData = JSON.parse(localStorage.getItem('bonusData')) || {};
+    let siteData = JSON.parse(localStorage.getItem('siteData')) || {};
+    let memoData = JSON.parse(localStorage.getItem('memoData')) || {};
+    
+    let yToday = todayObj.getFullYear();
+    let mToday = String(todayObj.getMonth() + 1).padStart(2, '0');
+    let dToday = String(todayObj.getDate()).padStart(2, '0');
+    let selectedDateKey = `${yToday}-${mToday}-${dToday}`;
 
-                if (i < firstDayIndex) {
-                    // 이전 달 날짜
-                    dDay = prevLastDay - firstDayIndex + i + 1;
-                    dMonth = month - 1;
-                    if (dMonth < 0) { dMonth = 11; dYear--; }
-                    cell.classList.add('other-month');
-                } else if (i >= firstDayIndex + lastDay) {
-                    // 다음 달 날짜
-                    dDay = nextMonthDayCount++;
-                    dMonth = month + 1;
-                    if (dMonth > 11) { dMonth = 0; dYear++; }
-                    cell.classList.add('other-month');
-                } else {
-                    // 이번 달 날짜
-                    dDay = dayCount++;
-                }
+    let tempSelectedYear = yToday;
+    let tempSelectedMonth = todayObj.getMonth();
 
-                dMonth = String(dMonth + 1).padStart(2, '0');
-                dDayStr = String(dDay).padStart(2, '0');
-                cellDateStr = `${dYear}-${dMonth}-${dDayStr}`;
+    function getSolarHolidays(year) {
+        return {
+            [`${year}-01-01`]: "신정", [`${year}-03-01`]: "삼일절", [`${year}-05-05`]: "어린이날",
+            [`${year}-06-06`]: "현충일", [`${year}-08-15`]: "광복절", [`${year}-10-03`]: "개천절",
+            [`${year}-10-09`]: "한글날", [`${year}-12-25`]: "크리스마스"
+        };
+    }
 
-                cell.setAttribute('data-date', cellDateStr);
-                cell.onclick = () => selectDate(cellDateStr);
+    function getLunarHolidays(year) {
+        const lunarMap = {
+            2026: { "2026-02-16": "설날연휴", "2026-02-17": "설날", "2026-02-18": "설날연휴", "2026-05-24": "부처님오신날", "2026-09-24": "추석연휴", "2026-09-25": "추석", "2026-09-26": "추석연휴" },
+            2027: { "2027-02-06": "설날연휴", "2027-02-07": "설날", "2027-02-08": "설날연휴", "2027-05-13": "부처님오신날", "2027-09-14": "추석연휴", "2027-09-15": "추석", "2027-09-16": "추석연휴" },
+            2028: { "2028-01-25": "설날연휴", "2028-01-26": "설날", "2028-01-27": "설날연휴", "2028-05-02": "부처님오신날", "2028-10-02": "추석연휴", "2028-10-03": "추석", "2028-10-04": "추석연휴" }
+        };
+        return lunarMap[year] || {};
+    }
 
-                if (selectedDateStr === cellDateStr) {
-                    cell.classList.add('selected');
-                }
+    function getRateForDate(dateKey) {
+        if (rateData[dateKey] !== undefined) {
+            return rateData[dateKey];
+        }
+        let sortedDates = Object.keys(rateData).sort();
+        let applicableRate = 200000;
+        for (let d of sortedDates) {
+            if (d <= dateKey) {
+                applicableRate = rateData[d];
+            } else {
+                break;
+            }
+        }
+        return applicableRate;
+    }
 
-                // 날짜 번호 표시
-                const numDiv = document.createElement('div');
-                numDiv.className = 'day-number';
-                numDiv.innerText = dDay;
-                cell.appendChild(numDiv);
+    function parseHoursFromManDays(val) {
+        let days = Math.floor(val);
+        let hours = Math.round((val - days) * 10);
+        return (days * 8) + hours;
+    }
 
-                // 데이터(공수/금액) 표시
-                if (workData[cellDateStr]) {
-                    const contentDiv = document.createElement('div');
-                    contentDiv.className = 'day-content';
+    function renderCalendar() {
+        const year = currentDate.getFullYear();
+        const month = currentDate.getMonth();
 
-                    const gongsuVal = workData[cellDateStr].gongsu || 0;
-                    if (gongsuVal > 0) {
-                        const gBadge = document.createElement('div');
-                        gBadge.className = 'badge-gongsu';
-                        gBadge.innerText = gongsuVal;
-                        contentDiv.appendChild(gBadge);
+        document.getElementById('month-year').innerText = `${year}년 ${month + 1}월`;
 
-                        // 해당 월/일 단가 계산
-                        const currentDanga = getDangaForDate(cellDateStr);
-                        const calculatedAmount = gongsuVal * currentDanga;
+        const firstDayIndex = new Date(year, month, 1).getDay();
+        const lastDay = new Date(year, month + 1, 0).getDate();
+        const prevLastDay = new Date(year, month, 0).getDate();
+        const lastDayIndex = new Date(year, month + 1, 0).getDay();
+        
+        let daysContainer = document.getElementById('days-container');
+        daysContainer.innerHTML = '';
 
-                        const aBadge = document.createElement('div');
-                        aBadge.className = 'badge-amount';
-                        // 금액이 길어도 잘리지 않도록 만 단위나 축약, 혹은 숫자 포맷 적용
-                        aBadge.innerText = calculatedAmount.toLocaleString() + '원';
-                        contentDiv.appendChild(aBadge);
-                    }
-                    cell.appendChild(contentDiv);
-                }
+        for (let i = firstDayIndex; i > 0; i--) {
+            daysContainer.appendChild(createDayCell(year, month - 1, prevLastDay - i + 1, true));
+        }
+        for (let i = 1; i <= lastDay; i++) {
+            daysContainer.appendChild(createDayCell(year, month, i, false));
+        }
+        let nextDays = 7 - lastDayIndex - 1;
+        if (nextDays < 0) nextDays += 7;
+        for (let i = 1; i <= nextDays; i++) {
+            daysContainer.appendChild(createDayCell(year, month + 1, i, true));
+        }
 
-                grid.appendChild(cell);
+        updateBottomInfo();
+        calculateTotal();
+    }
+
+    function createDayCell(year, month, day, isOtherMonth) {
+        let targetDate = new Date(year, month, day);
+        let y = targetDate.getFullYear();
+        let m = String(targetDate.getMonth() + 1).padStart(2, '0');
+        let d = String(targetDate.getDate()).padStart(2, '0');
+        let dateKey = `${y}-${m}-${d}`;
+        let dayOfWeek = targetDate.getDay();
+
+        let cell = document.createElement('div');
+        cell.className = 'day-cell';
+        if (isOtherMonth) cell.classList.add('other-month');
+
+        let solarHolidays = getSolarHolidays(y);
+        let lunarHolidays = getLunarHolidays(y);
+        let holidayName = solarHolidays[dateKey] || lunarHolidays[dateKey];
+
+        if (dayOfWeek === 0 || holidayName) {
+            cell.classList.add('is-holiday');
+        } else if (dayOfWeek === 6) {
+            cell.classList.add('is-sat');
+        }
+
+        let today = new Date();
+        if (targetDate.getFullYear() === today.getFullYear() &&
+            targetDate.getMonth() === today.getMonth() &&
+            targetDate.getDate() === today.getDate()) {
+            cell.classList.add('is-today');
+        }
+
+        let isSelected = (selectedDateKey === dateKey);
+        if (isSelected) {
+            cell.classList.add('selected');
+        }
+
+        let numberArea = document.createElement('div');
+        numberArea.className = 'day-number-area';
+        
+        let dayNumber = document.createElement('div');
+        dayNumber.className = 'day-number';
+        dayNumber.innerText = day;
+        numberArea.appendChild(dayNumber);
+        cell.appendChild(numberArea);
+
+        if (holidayName && !isOtherMonth) {
+            let hLabel = document.createElement('div');
+            hLabel.className = 'holiday-name';
+            hLabel.innerText = holidayName;
+            cell.appendChild(hLabel);
+        }
+
+        if (workData[dateKey] !== undefined && parseFloat(workData[dateKey]) > 0) {
+            let manDays = parseFloat(workData[dateKey]);
+            let badge = document.createElement('div');
+            badge.className = 'work-badge';
+            badge.innerText = manDays;
+            cell.appendChild(badge);
+
+            if (isSelected) {
+                let rateForDay = getRateForDate(dateKey);
+                let totalHours = parseHoursFromManDays(manDays);
+                let hourlyRate = rateForDay / 8;
+                let dayPay = Math.round(hourlyRate * totalHours) + (parseFloat(bonusData[dateKey]) || 0);
+
+                let payBadge = document.createElement('div');
+                payBadge.className = 'pay-badge';
+                payBadge.innerText = dayPay.toLocaleString();
+                cell.appendChild(payBadge);
+            }
+        }
+
+        if (memoData[dateKey] && memoData[dateKey].trim() !== '') {
+            let memoBadge = document.createElement('div');
+            memoBadge.className = 'memo-badge';
+            memoBadge.innerText = memoData[dateKey];
+            cell.appendChild(memoBadge);
+        }
+
+        cell.onclick = function() {
+            selectedDateKey = dateKey;
+            renderCalendar();
+        };
+
+        return cell;
+    }
+
+    function updateBottomInfo() {
+        let bottomInfo = document.getElementById('calendar-bottom-info');
+        if (!selectedDateKey) {
+            bottomInfo.innerHTML = `<span>현장 :</span> 선택된 날짜가 없습니다.`;
+            return;
+        }
+        let siteVal = siteData[selectedDateKey];
+        if (siteVal && siteVal.trim() !== '') {
+            bottomInfo.innerHTML = `<span>현장 :</span> '${siteVal}'`;
+        } else {
+            bottomInfo.innerHTML = `<span>현장 :</span> (입력된 현장 없음)`;
+        }
+    }
+
+    function openDatePickerModal() {
+        tempSelectedYear = currentDate.getFullYear();
+        tempSelectedMonth = currentDate.getMonth();
+        
+        updatePopupYearDisplay();
+        updatePopupMonthSelection();
+
+        document.getElementById('date-picker-modal').style.display = 'flex';
+    }
+
+    function closeDatePickerModal() {
+        document.getElementById('date-picker-modal').style.display = 'none';
+    }
+
+    function changePopupYear(direction) {
+        tempSelectedYear += direction;
+        updatePopupYearDisplay();
+    }
+
+    function updatePopupYearDisplay() {
+        document.getElementById('popup-year-display').innerText = `${tempSelectedYear}년`;
+    }
+
+    function updatePopupMonthSelection() {
+        let buttons = document.querySelectorAll('#month-select-grid .date-picker-btn');
+        buttons.forEach((btn, idx) => {
+            if (idx === tempSelectedMonth) {
+                btn.classList.add('selected');
+            } else {
+                btn.classList.remove('selected');
+            }
+        });
+    }
+
+    function selectMonthGrid(monthIndex) {
+        tempSelectedMonth = monthIndex;
+        updatePopupMonthSelection();
+
+        currentDate.setFullYear(tempSelectedYear);
+        currentDate.setMonth(tempSelectedMonth);
+        closeDatePickerModal();
+        renderCalendar();
+    }
+
+    function openRateModal() {
+        if (!selectedDateKey) {
+            alert("날짜를 먼저 선택해 주세요!");
+            return;
+        }
+        document.getElementById('popup-rate-input').value = rateData[selectedDateKey] !== undefined ? rateData[selectedDateKey] : getRateForDate(selectedDateKey);
+        document.getElementById('popup-bonus-input').value = bonusData[selectedDateKey] !== undefined ? bonusData[selectedDateKey] : '';
+        document.getElementById('apply-future-check').checked = false;
+        document.getElementById('rate-modal').style.display = 'flex';
+        
+        setTimeout(() => {
+            let input = document.getElementById('popup-rate-input');
+            input.focus();
+            input.select();
+        }, 50);
+    }
+
+    function closeRateModal() {
+        document.getElementById('rate-modal').style.display = 'none';
+    }
+
+    function saveRate() {
+        let newRate = parseFloat(document.getElementById('popup-rate-input').value);
+        let newBonus = parseFloat(document.getElementById('popup-bonus-input').value);
+        let applyFutureMonth = document.getElementById('apply-future-check').checked;
+
+        if (isNaN(newRate) || newRate < 0) {
+            alert("올바른 단가 금액을 입력해주세요!");
+            return;
+        }
+
+        if (applyFutureMonth) {
+            let yearMonthPrefix = selectedDateKey.substring(0, 7);
+            let nextMonthFirstDay = yearMonthPrefix.substring(0, 5) + String(parseInt(yearMonthPrefix.substring(5, 7)) + 1).padStart(2, '0') + "-01";
+            if (yearMonthPrefix.endsWith("-12")) {
+                let nextYear = parseInt(yearMonthPrefix.substring(0, 4)) + 1;
+                nextMonthFirstDay = `${nextYear}-01-01`;
             }
 
-            updateSummary();
-        }
+            let keys = Object.keys(rateData);
+            for (let k of keys) {
+                if (k.startsWith(yearMonthPrefix) && k >= selectedDateKey) {
+                    delete rateData[k];
+                }
+            }
+            rateData[selectedDateKey] = newRate;
 
-        function changeMonth(diff) {
-            currentDate.setMonth(currentDate.getMonth() + diff);
-            initCalendar();
-        }
-
-        function goToday() {
-            currentDate = new Date();
-            initCalendar();
-        }
-
-        function selectDate(dateStr) {
-            selectedDateStr = dateStr;
-            initCalendar();
-        }
-
-        function getDangaForDate(dateStr) {
-            // 가장 가까운 과거 또는 당일 설정된 단가 가져오기 (없으면 기본 150,000원)
-            if (dangaData[dateStr]) return dangaData[dateStr];
-            
-            const sortedDates = Object.keys(dangaData).sort();
-            let activeDanga = 150000;
-            for (let d of sortedDates) {
-                if (d <= dateStr) {
-                    activeDanga = dangaData[d];
-                } else {
+            let nextMonthRate = 200000;
+            for (let k of keys) {
+                if (k >= nextMonthFirstDay) {
+                    nextMonthRate = rateData[k];
                     break;
+                } else if (k < selectedDateKey) {
+                    nextMonthRate = rateData[k];
                 }
             }
-            return activeDanga;
-        }
+            rateData[nextMonthFirstDay] = nextMonthRate;
 
-        function openGongsuModal() {
-            if (!selectedDateStr) {
-                alert('날짜를 먼저 선택해주세요.');
-                return;
+        } else {
+            let nextDayObj = new Date(selectedDateKey);
+            nextDayObj.setDate(nextDayObj.getDate() + 1);
+            let nextDayKey = nextDayObj.toISOString().split('T')[0];
+
+            let prevBeforeRate = 200000;
+            let sortedKeys = Object.keys(rateData).sort();
+            for (let k of sortedKeys) {
+                if (k < selectedDateKey) prevBeforeRate = rateData[k];
+                else break;
             }
-            document.getElementById('gongsuInput').value = workData[selectedDateStr]?.gongsu || '';
-            document.getElementById('gongsuModal').classList.add('active');
+            let existingNextRate = rateData[nextDayKey] !== undefined ? rateData[nextDayKey] : prevBeforeRate;
+
+            rateData[selectedDateKey] = newRate;
+            rateData[nextDayKey] = existingNextRate;
         }
 
-        function openDangaModal() {
-            if (!selectedDateStr) {
-                alert('단가를 적용할 기준 날짜를 먼저 선택해주세요.');
-                return;
+        if (isNaN(newBonus) || newBonus <= 0) {
+            delete bonusData[selectedDateKey];
+        } else {
+            bonusData[selectedDateKey] = newBonus;
+        }
+
+        localStorage.setItem('rateData', JSON.stringify(rateData));
+        localStorage.setItem('bonusData', JSON.stringify(bonusData));
+        closeRateModal();
+        renderCalendar();
+    }
+
+    function openWorkModal() {
+        if (!selectedDateKey) { alert("날짜를 먼저 선택해 주세요!"); return; }
+        document.getElementById('popup-work-input').value = workData[selectedDateKey] !== undefined ? workData[selectedDateKey] : '';
+        document.getElementById('work-modal').style.display = 'flex';
+        setTimeout(() => { let input = document.getElementById('popup-work-input'); input.focus(); input.select(); }, 50);
+    }
+    function closeWorkModal() { document.getElementById('work-modal').style.display = 'none'; }
+    function saveWork() {
+        let val = parseFloat(document.getElementById('popup-work-input').value);
+        if (isNaN(val) || val < 0) delete workData[selectedDateKey];
+        else workData[selectedDateKey] = Math.round(val * 10) / 10;
+        localStorage.setItem('workData', JSON.stringify(workData));
+        closeWorkModal();
+        renderCalendar();
+    }
+
+    function openMemoModal() {
+        if (!selectedDateKey) { alert("날짜를 먼저 선택해 주세요!"); return; }
+        document.getElementById('popup-memo-input').value = memoData[selectedDateKey] || '';
+        document.getElementById('memo-modal').style.display = 'flex';
+        setTimeout(() => { let input = document.getElementById('popup-memo-input'); input.focus(); input.select(); }, 50);
+    }
+    function closeMemoModal() { document.getElementById('memo-modal').style.display = 'none'; }
+    function saveMemo() {
+        let val = document.getElementById('popup-memo-input').value.trim();
+        if (val === '') delete memoData[selectedDateKey];
+        else memoData[selectedDateKey] = val;
+        localStorage.setItem('memoData', JSON.stringify(memoData));
+        closeMemoModal();
+        renderCalendar();
+    }
+
+    function openSiteModal() {
+        if (!selectedDateKey) { alert("날짜를 먼저 선택해 주세요!"); return; }
+        document.getElementById('popup-site-input').value = siteData[selectedDateKey] || '';
+        document.getElementById('site-modal').style.display = 'flex';
+        setTimeout(() => { let input = document.getElementById('popup-site-input'); input.focus(); input.select(); }, 50);
+    }
+    function closeSiteModal() { document.getElementById('site-modal').style.display = 'none'; }
+    function saveSite() {
+        let val = document.getElementById('popup-site-input').value.trim();
+        if (val === '') delete siteData[selectedDateKey];
+        else siteData[selectedDateKey] = val;
+        localStorage.setItem('siteData', JSON.stringify(siteData));
+        closeSiteModal();
+        renderCalendar();
+    }
+
+    function changeMonth(direction) {
+        currentDate.setMonth(currentDate.getMonth() + direction);
+        renderCalendar();
+    }
+
+    function goToToday() {
+        let now = new Date();
+        currentDate = new Date(now.getFullYear(), now.getMonth(), 1);
+        let y = now.getFullYear();
+        let m = String(now.getMonth() + 1).padStart(2, '0');
+        let d = String(now.getDate()).padStart(2, '0');
+        selectedDateKey = `${y}-${m}-${d}`;
+        renderCalendar();
+    }
+
+    function calculateTotal() {
+        let totalManDays = 0;
+        let totalPay = 0;
+
+        for (let key in workData) {
+            let parts = key.split('-');
+            let y = parseInt(parts[0]);
+            let m = parseInt(parts[1]);
+
+            if (y === currentDate.getFullYear() && m === (currentDate.getMonth() + 1)) {
+                let manDays = parseFloat(workData[key]) || 0;
+                let rateForDay = getRateForDate(key);
+                let bonusForDay = parseFloat(bonusData[key]) || 0;
+                
+                totalManDays = Math.round((totalManDays + manDays) * 10) / 10;
+                
+                let totalHours = parseHoursFromManDays(manDays);
+                let hourlyRate = rateForDay / 8;
+                totalPay += (hourlyRate * totalHours) + bonusForDay;
             }
-            document.getElementById('dangaInput').value = dangaData[selectedDateStr] || getDangaForDate(selectedDateStr);
-            document.getElementById('dangaModal').classList.add('active');
         }
 
-        function openMemoModal() { alert('메모 기능 준비 중입니다.'); }
-        function openSiteModal() { alert('현장 관리 기능 준비 중입니다.'); }
+        document.getElementById('total-man-days').innerText = totalManDays.toFixed(1) + ' 공수';
+        document.getElementById('total-pay').innerText = Math.round(totalPay).toLocaleString() + ' 원';
+    }
 
-        function closeModals() {
-            document.querySelectorAll('.modal').forEach(m => m.classList.remove('active'));
-        }
+    renderCalendar();
+</script>
 
-        function saveGongsu() {
-            const val = parseFloat(document.getElementById('gongsuInput').value);
-            if (isNaN(val) || val < 0) {
-                alert('올바른 공수 값을 입력해주세요.');
-                return;
-            }
-
-            if (!workData[selectedDateStr]) workData[selectedDateStr] = {};
-            workData[selectedDateStr].gongsu = val;
-
-            localStorage.setItem('workData', JSON.stringify(workData));
-            closeModals();
-            initCalendar();
-        }
-
-        function saveDanga() {
-            const val = parseInt(document.getElementById('dangaInput').value);
-            if (isNaN(val) || val < 0) {
-                alert('올바른 단가를 입력해주세요.');
-                return;
-            }
-
-            dangaData[selectedDateStr] = val;
-            localStorage.setItem('dangaData', JSON.stringify(dangaData));
-            closeModals();
-            initCalendar();
-        }
-
-        function updateSummary() {
-            const year = currentDate.getFullYear();
-            const month = String(currentDate.getMonth() + 1).padStart(2, '0');
-            const prefix = `${year}-${month}`;
-
-            let totalG = 0;
-            let totalS = 0;
-
-            for (let dateStr in workData) {
-                if (dateStr.startsWith(prefix)) {
-                    const g = workData[dateStr].gongsu || 0;
-                    totalG += g;
-                    totalS += g * getDangaForDate(dateStr);
-                }
-            }
-
-            document.getElementById('totalGongsu').innerText = totalG.toFixed(1);
-            document.getElementById('totalSalary').innerText = totalS.toLocaleString() + ' 원';
-        }
-
-        // 초기 실행
-        initCalendar();
-    </script>
 </body>
 </html>
