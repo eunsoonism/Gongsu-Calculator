@@ -51,7 +51,6 @@
         .holiday-name { font-size: 9px; color: #ef4444; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-bottom: 2px; }
         .work-badge { font-size: 13px; font-weight: 800; background: #dcfce7; color: #15803d; padding: 2px 0; border-radius: 4px; text-align: center; margin-bottom: 2px; width: 100%; }
         
-        /* 금액 잘림 방지를 위해 폰트 크기, 좌우 패딩 및 자간(letter-spacing) 최적화 */
         .pay-badge { 
             font-size: 10px; 
             font-weight: 900; 
@@ -489,13 +488,12 @@
         document.getElementById('popup-rate-input').value = rateData[selectedDateKey] !== undefined ? rateData[selectedDateKey] : getRateForDate(selectedDateKey);
         document.getElementById('popup-bonus-input').value = bonusData[selectedDateKey] !== undefined ? bonusData[selectedDateKey] : '';
         document.getElementById('apply-future-check').checked = false;
-        document.getElementById('rate-modal').style.display = 'flex';
         
-        setTimeout(() => {
-            let input = document.getElementById('popup-rate-input');
-            input.focus();
-            input.select();
-        }, 50);
+        // 지연 없이 즉시 포커스 및 전체 선택 적용 (키보드 자동 팝업 유도)
+        let input = document.getElementById('popup-rate-input');
+        document.getElementById('rate-modal').style.display = 'flex';
+        input.focus();
+        input.select();
     }
 
     function closeRateModal() {
@@ -571,8 +569,11 @@
     function openWorkModal() {
         if (!selectedDateKey) { alert("날짜를 먼저 선택해 주세요!"); return; }
         document.getElementById('popup-work-input').value = workData[selectedDateKey] !== undefined ? workData[selectedDateKey] : '';
+        
+        let input = document.getElementById('popup-work-input');
         document.getElementById('work-modal').style.display = 'flex';
-        setTimeout(() => { let input = document.getElementById('popup-work-input'); input.focus(); input.select(); }, 50);
+        input.focus();
+        input.select();
     }
     function closeWorkModal() { document.getElementById('work-modal').style.display = 'none'; }
     function saveWork() {
@@ -587,8 +588,11 @@
     function openMemoModal() {
         if (!selectedDateKey) { alert("날짜를 먼저 선택해 주세요!"); return; }
         document.getElementById('popup-memo-input').value = memoData[selectedDateKey] || '';
+        
+        let input = document.getElementById('popup-memo-input');
         document.getElementById('memo-modal').style.display = 'flex';
-        setTimeout(() => { let input = document.getElementById('popup-memo-input'); input.focus(); input.select(); }, 50);
+        input.focus();
+        input.select();
     }
     function closeMemoModal() { document.getElementById('memo-modal').style.display = 'none'; }
     function saveMemo() {
@@ -603,8 +607,11 @@
     function openSiteModal() {
         if (!selectedDateKey) { alert("날짜를 먼저 선택해 주세요!"); return; }
         document.getElementById('popup-site-input').value = siteData[selectedDateKey] || '';
+        
+        let input = document.getElementById('popup-site-input');
         document.getElementById('site-modal').style.display = 'flex';
-        setTimeout(() => { let input = document.getElementById('popup-site-input'); input.focus(); input.select(); }, 50);
+        input.focus();
+        input.select();
     }
     function closeSiteModal() { document.getElementById('site-modal').style.display = 'none'; }
     function saveSite() {
