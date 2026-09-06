@@ -36,10 +36,10 @@
 
         .days-grid { display: grid; grid-template-columns: repeat(7, 1fr); grid-auto-rows: 1fr; gap: 4px; padding: 8px 10px 4px 10px; flex: 1; overflow: hidden; }
         
-        .day-cell { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 4px 2px; display: flex; flex-direction: column; justify-content: flex-start; cursor: pointer; position: relative; overflow: hidden; }
+        .day-cell { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 3px 2px; display: flex; flex-direction: column; justify-content: flex-start; cursor: pointer; position: relative; overflow: hidden; }
         .day-cell.other-month { opacity: 0.25; background: #fdfdfd; }
         
-        .day-number-area { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px; }
+        .day-number-area { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1px; }
         .day-number { font-size: 13px; font-weight: 700; color: #334155; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; border-radius: 50%; }
         
         .day-cell.is-holiday .day-number { color: #ef4444; }
@@ -48,18 +48,19 @@
         .day-cell.selected { background: #e0f2fe; border-color: #38bdf8; }
         .day-cell.selected .day-number { color: #0369a1; font-weight: 900; }
 
-        .holiday-name { font-size: 9px; color: #ef4444; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-bottom: 2px; }
-        .work-badge { font-size: 13px; font-weight: 800; background: #dcfce7; color: #15803d; padding: 2px 0; border-radius: 4px; text-align: center; margin-bottom: 2px; width: 100%; }
+        .holiday-name { font-size: 9px; color: #ef4444; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-bottom: 1px; }
+        .work-badge { font-size: 12px; font-weight: 800; background: #dcfce7; color: #15803d; padding: 1px 0; border-radius: 4px; text-align: center; margin-bottom: 1px; width: 100%; }
         
+        /* 선택된 날짜 하단 금액 배지 글자 크기 및 가독성 개선 */
         .pay-badge { 
-            font-size: 10px; 
+            font-size: 11px; 
             font-weight: 900; 
             background: #f0fdf4; 
             color: #15803d; 
             padding: 2px 1px; 
             border-radius: 4px; 
             text-align: center; 
-            margin-bottom: 2px; 
+            margin-bottom: 1px; 
             border: 1px solid #bbf7d0; 
             width: 100%; 
             white-space: nowrap; 
@@ -489,7 +490,6 @@
         document.getElementById('popup-bonus-input').value = bonusData[selectedDateKey] !== undefined ? bonusData[selectedDateKey] : '';
         document.getElementById('apply-future-check').checked = false;
         
-        // 지연 없이 즉시 포커스 및 전체 선택 적용 (키보드 자동 팝업 유도)
         let input = document.getElementById('popup-rate-input');
         document.getElementById('rate-modal').style.display = 'flex';
         input.focus();
