@@ -17,9 +17,9 @@
 
         /* 하단 요약 카드 */
         .header-card { background: #1e293b; color: white; padding: 6px 12px 12px 12px; border-top: 1px solid #334155; flex-shrink: 0; order: 3; }
-        .summary-row { display: flex; justify-content: space-between; align-items: center; background: #0f172a; padding: 6px 12px; border-radius: 8px; border: 1px solid #334155; }
+        .summary-row { display: flex; justify-content: space-between; align-items: center; background: #0f172a; padding: 12px 12px; border-radius: 8px; border: 1px solid #334155; }
         .summary-item label { font-size: 10px; color: #94a3b8; display: block; }
-        .summary-item val { font-size: 13px; font-weight: 700; color: #38bdf8; }
+        .summary-item val { font-size: 18px; font-weight: 700; color: #38bdf8; }
         .summary-item val.pay { color: #4ade80; }
 
         /* 달력 영역 */
@@ -100,7 +100,6 @@
         .modal-sub-row { display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: #cbd5e1; background: #0f172a; padding: 8px 10px; border-radius: 6px; border: 1px solid #334155; }
         .modal-sub-row input { width: 110px; padding: 4px 6px; font-size: 13px; font-weight: bold; background: #1e293b; border: 1px solid #475569; color: white; border-radius: 4px; text-align: right; outline: none; }
 
-        /* 저장 버튼 (기존 취소 버튼 위치를 대체) */
         .modal-save-btn { background: #3b82f6; color: white; border: none; padding: 10px; border-radius: 6px; font-size: 14px; font-weight: bold; cursor: pointer; margin-top: 2px; width: 100%; }
         .modal-save-btn:active { background: #2563eb; }
 
@@ -131,7 +130,7 @@
         <div id="days-container" class="days-grid"></div>
 
         <div class="calendar-bottom-info" id="calendar-bottom-info">
-            <span>현장 :</span> 선택된 날짜가 없습니다.
+            <span>현장 :</span> 선택된 월이 없습니다.
         </div>
     </div>
 
@@ -157,7 +156,7 @@
         </div>
     </div>
 
-    <!-- 모달들: 배경 클릭 시 닫히도록 onclick 이벤트 추가 -->
+    <!-- 모달들 -->
     <div class="modal-overlay" id="date-picker-modal" onclick="handleModalOutsideClick(event, 'date-picker-modal')">
         <div class="modal-content">
             <h3>날짜 선택</h3>
@@ -241,6 +240,7 @@
     let workData = JSON.parse(localStorage.getItem('workData')) || initialWorkData;
     let rateData = JSON.parse(localStorage.getItem('rateData')) || {};
     let bonusData = JSON.parse(localStorage.getItem('bonusData')) || {};
+    // 현장 데이터를 월 단위 키(YYYY-MM)로 관리하도록 변경
     let siteData = JSON.parse(localStorage.getItem('siteData')) || {};
     let memoData = JSON.parse(localStorage.getItem('memoData')) || {};
     
@@ -274,7 +274,6 @@
         }
     }
 
-    // 배경 터치 시 모달 닫기 공통 함수
     function handleModalOutsideClick(event, modalId) {
         if (event.target.id === modalId) {
             document.getElementById(modalId).style.display = 'none';
@@ -435,13 +434,14 @@
         return cell;
     }
 
+    // 하단 현장 표시는 현재 보고 있는 월 기준(YYYY-MM)으로 표시
     function updateBottomInfo() {
         let bottomInfo = document.getElementById('calendar-bottom-info');
-        if (!selectedDateKey) {
-            bottomInfo.innerHTML = `<span>현장 :</span> 선택된 날짜가 없습니다.`;
-            return;
-        }
-        let siteVal = siteData[selectedDateKey];
+        let y = currentDate.getFullYear();
+        let m = String(currentDate.getMonth() + 1).padStart(2, '0');
+        let monthKey = `${y}-${m}`;
+
+        let siteVal = siteData[monthKey];
         if (siteVal && siteVal.trim() !== '') {
             bottomInfo.innerHTML = `<span>현장 :</span> '${siteVal}'`;
         } else {
@@ -608,9 +608,13 @@
         renderCalendar();
     }
 
+    // 현장 설정 오픈: 현재 보고 있는 월(YYYY-MM) 기준으로 불러오기
     function openSiteModal() {
-        if (!selectedDateKey) { alert("날짜를 먼저 선택해 주세요!"); return; }
-        document.getElementById('popup-site-input').value = siteData[selectedDateKey] || '';
+        let y = currentDate.getFullYear();
+        let m = String(currentDate.getMonth() + 1).padStart(2, '0');
+        let monthKey = `${y}-${m}`;
+
+        document.getElementById('popup-site-input').value = siteData[monthKey] || '';
         
         let input = document.getElementById('popup-site-input');
         document.getElementById('site-modal').style.display = 'flex';
@@ -618,10 +622,18 @@
         input.select();
     }
     
+    // 현장 저장: 현재 보고 있는 월(YYYY-MM) 키로 저장
     function saveSite() {
+        let y = currentDate.getFullYear();
+        let m = String(currentDate.getMonth() + 1).padStart(2, '0');
+        let monthKey = `${y}-${m}`;
+
         let val = document.getElementById('popup-site-input').value.trim();
-        if (val === '') delete siteData[selectedDateKey];
-        else siteData[selectedDateKey] = val;
+        if (val === '') {
+            delete siteData[monthKey];
+        } else {
+            siteData[monthKey] = val;
+        }
         localStorage.setItem('siteData', JSON.stringify(siteData));
         document.getElementById('site-modal').style.display = 'none';
         renderCalendar();
