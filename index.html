@@ -69,8 +69,12 @@
 
         .memo-badge { font-size: 8px; font-weight: 500; background: #f1f5f9; color: #475569; padding: 1px 2px; border-radius: 2px; text-align: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; border: 1px solid #e2e8f0; margin-top: auto; width: 100%; }
 
-        .calendar-bottom-info { padding: 4px 12px; font-size: 15px; font-weight: 700; color: #0369a1; background: #ffffff; display: flex; align-items: center; gap: 6px; min-height: 24px; max-height: 24px; border-top: 1px solid #f1f5f9; flex-shrink: 0; }
+        .calendar-bottom-info { padding: 4px 12px; font-size: 15px; font-weight: 700; color: #0369a1; background: #ffffff; display: flex; align-items: center; justify-content: space-between; min-height: 24px; max-height: 24px; border-top: 1px solid #f1f5f9; flex-shrink: 0; }
         .calendar-bottom-info span { color: #334155; font-weight: 600; font-size: 15px; }
+        
+        /* 금액 체크박스 스타일 */
+        .show-pay-label { font-size: 12px; font-weight: 600; color: #64748b; display: flex; align-items: center; gap: 4px; cursor: pointer; }
+        .show-pay-label input { width: 13px; height: 13px; accent-color: #3b82f6; cursor: pointer; }
 
         /* 액션 버튼 패널 */
         .action-panel { background: #1e293b; padding: 8px 12px 12px 12px; display: flex; flex-direction: column; gap: 6px; flex-shrink: 0; order: 2; }
@@ -130,7 +134,10 @@
         <div id="days-container" class="days-grid"></div>
 
         <div class="calendar-bottom-info" id="calendar-bottom-info">
-            <span>현장 :</span> 선택된 월이 없습니다.
+            <div id="site-display-area"><span>현장 :</span> 선택된 월이 없습니다.</div>
+            <label class="show-pay-label">
+                <input type="checkbox" id="show-pay-checkbox" onchange="toggleShowPay()"> 금액
+            </label>
         </div>
     </div>
 
@@ -240,10 +247,13 @@
     let workData = JSON.parse(localStorage.getItem('workData')) || initialWorkData;
     let rateData = JSON.parse(localStorage.getItem('rateData')) || {};
     let bonusData = JSON.parse(localStorage.getItem('bonusData')) || {};
-    // 현장 데이터를 월 단위 키(YYYY-MM)로 관리하도록 변경
     let siteData = JSON.parse(localStorage.getItem('siteData')) || {};
     let memoData = JSON.parse(localStorage.getItem('memoData')) || {};
     
+    // 금액 체크박스 설정 불러오기 (기본값 false: 체크 안 됨)
+    let showPay = JSON.parse(localStorage.getItem('showPay')) || false;
+    document.getElementById('show-pay-checkbox').checked = showPay;
+
     let yToday = todayObj.getFullYear();
     let mToday = String(todayObj.getMonth() + 1).padStart(2, '0');
     let dToday = String(todayObj.getDate()).padStart(2, '0');
@@ -406,7 +416,8 @@
             badge.innerText = manDays;
             cell.appendChild(badge);
 
-            if (isSelected) {
+            // '금액' 체크박스가 켜져 있을 때만 날짜칸에 금액 표시
+            if (showPay) {
                 let rateForDay = getRateForDate(dateKey);
                 let totalHours = parseHoursFromManDays(manDays);
                 let hourlyRate = rateForDay / 8;
@@ -434,19 +445,25 @@
         return cell;
     }
 
-    // 하단 현장 표시는 현재 보고 있는 월 기준(YYYY-MM)으로 표시
     function updateBottomInfo() {
-        let bottomInfo = document.getElementById('calendar-bottom-info');
+        let siteDisplayArea = document.getElementById('site-display-area');
         let y = currentDate.getFullYear();
         let m = String(currentDate.getMonth() + 1).padStart(2, '0');
         let monthKey = `${y}-${m}`;
 
         let siteVal = siteData[monthKey];
         if (siteVal && siteVal.trim() !== '') {
-            bottomInfo.innerHTML = `<span>현장 :</span> '${siteVal}'`;
+            siteDisplayArea.innerHTML = `<span>현장 :</span> '${siteVal}'`;
         } else {
-            bottomInfo.innerHTML = `<span>현장 :</span> (입력된 현장 없음)`;
+            siteDisplayArea.innerHTML = `<span>현장 :</span> (입력된 현장 없음)`;
         }
+    }
+
+    // 금액 체크박스 토글 함수
+    function toggleShowPay() {
+        showPay = document.getElementById('show-pay-checkbox').checked;
+        localStorage.setItem('showPay', JSON.stringify(showPay));
+        renderCalendar();
     }
 
     function openDatePickerModal() {
@@ -572,7 +589,12 @@
 
     function openWorkModal() {
         if (!selectedDateKey) { alert("날짜를 먼저 선택해 주세요!"); return; }
-        document.getElementById('popup-work-input').value = workData[selectedDateKey] !== undefined ? workData[selectedDateKey] : '';
+        
+        let existingVal = parseFloat(workData[selectedDateKey]);
+        // 값이 없거나 0 이하이면 무조건 1로 설정
+        let val = (!isNaN(existingVal) && existingVal > 0) ? existingVal : 1;
+        
+        document.getElementById('popup-work-input').value = val;
         
         let input = document.getElementById('popup-work-input');
         document.getElementById('work-modal').style.display = 'flex';
@@ -608,7 +630,6 @@
         renderCalendar();
     }
 
-    // 현장 설정 오픈: 현재 보고 있는 월(YYYY-MM) 기준으로 불러오기
     function openSiteModal() {
         let y = currentDate.getFullYear();
         let m = String(currentDate.getMonth() + 1).padStart(2, '0');
@@ -622,7 +643,6 @@
         input.select();
     }
     
-    // 현장 저장: 현재 보고 있는 월(YYYY-MM) 키로 저장
     function saveSite() {
         let y = currentDate.getFullYear();
         let m = String(currentDate.getMonth() + 1).padStart(2, '0');
