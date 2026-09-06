@@ -14,31 +14,27 @@
 
         .app-header { background: #0f172a; color: white; padding: 8px 16px 4px 16px; font-size: 17px; font-weight: 800; text-align: center; letter-spacing: -0.5px; }
 
-        .header-card { background: #1e293b; color: white; padding: 8px 12px; border-top: 1px solid #334155; }
+        .header-card { background: #1e293b; color: white; padding: 8px 12px; border-top: 1px solid #334155; flex-shrink: 0; }
         .summary-row { display: flex; justify-content: space-between; align-items: center; background: #0f172a; padding: 6px 12px; border-radius: 8px; border: 1px solid #334155; }
         .summary-item label { font-size: 11px; color: #94a3b8; display: block; }
         .summary-item val { font-size: 14px; font-weight: 700; color: #38bdf8; }
         .summary-item val.pay { color: #4ade80; }
 
-        .calendar-wrapper { flex: 1; background: #ffffff; display: flex; flex-direction: column; border-top-left-radius: 20px; border-top-right-radius: 20px; overflow: hidden; box-shadow: 0 -4px 20px rgba(0,0,0,0.15); }
+        .calendar-wrapper { flex: 1; background: #ffffff; display: flex; flex-direction: column; border-top-left-radius: 20px; border-top-right-radius: 20px; overflow: hidden; box-shadow: 0 -4px 20px rgba(0,0,0,0.15); min-height: 0; }
         
-        .calendar-nav { display: flex; justify-content: space-between; align-items: center; padding: 8px 12px 4px 12px; }
-        .calendar-nav-left { display: flex; align-items: center; gap: 4px; }
-        .calendar-nav-right { display: flex; align-items: center; gap: 4px; }
+        /* 상단 네비게이션: 양옆 버튼 제거 후 월 선택 타이틀만 중앙 배치 및 오늘 버튼 유지 */
+        .calendar-nav { display: flex; justify-content: space-between; align-items: center; padding: 8px 16px 4px 16px; }
         .calendar-nav button { background: #f1f5f9; border: 1px solid #cbd5e1; padding: 3px 10px; border-radius: 6px; font-size: 12px; font-weight: bold; cursor: pointer; color: #334155; }
-        #month-year { font-size: 15px; font-weight: 800; color: #0f172a; cursor: pointer; padding: 3px 6px; border-radius: 6px; transition: background 0.2s; text-align: center; }
+        #month-year { font-size: 16px; font-weight: 800; color: #0f172a; cursor: pointer; padding: 3px 8px; border-radius: 6px; transition: background 0.2s; text-align: center; }
         #month-year:hover { background: #f1f5f9; }
 
-        /* 요일 헤더 좌우 여백 최소화 */
-        .weekdays { display: grid; grid-template-columns: repeat(7, 1fr); text-align: center; font-weight: 700; font-size: 11px; padding: 0 2px 2px 2px; border-bottom: 1px solid #f1f5f9; }
+        .weekdays { display: grid; grid-template-columns: repeat(7, 1fr); text-align: center; font-weight: 700; font-size: 11px; padding: 0 2px 2px 2px; border-bottom: 1px solid #f1f5f9; flex-shrink: 0; }
         .weekdays div:first-child { color: #ef4444; } 
         .weekdays div:last-child { color: #3b82f6; }  
         .weekdays div:not(:first-child):not(:last-child) { color: #64748b; }
 
-        /* 날짜 그리드 좌우 여백을 거의 없애고 칸 간격을 1px로 밀착 */
-        .days-grid { display: grid; grid-template-columns: repeat(7, 1fr); grid-auto-rows: 1fr; gap: 1px; padding: 4px 2px 2px 2px; flex: 1; overflow: hidden; background: #e2e8f0; }
+        .days-grid { display: grid; grid-template-columns: repeat(7, 1fr); grid-auto-rows: minmax(0, 1fr); gap: 1px; padding: 4px 2px 2px 2px; flex: 1; overflow: hidden; background: #e2e8f0; min-height: 0; }
         
-        /* 날짜 셀 내부 여백 최소화 및 모서리 각지게 조정하여 공간 확보 */
         .day-cell { background: #f8fafc; border: none; border-radius: 4px; padding: 1px 0px; display: flex; flex-direction: column; justify-content: flex-start; cursor: pointer; position: relative; overflow: hidden; }
         .day-cell.other-month { opacity: 0.25; background: #fdfdfd; }
         
@@ -54,7 +50,6 @@
         .holiday-name { font-size: 8px; color: #ef4444; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-bottom: 0px; padding: 0 1px; }
         .work-badge { font-size: 11px; font-weight: 700; background: #dcfce7; color: #15803d; padding: 0px; border-radius: 2px; text-align: center; margin-bottom: 0px; width: 100%; }
         
-        /* 금액 배지: 폰트 크기를 키우고 여백 및 자간을 좁혀 잘림 방지 */
         .pay-badge { 
             font-size: 12.5px; 
             font-weight: 700; 
@@ -72,10 +67,10 @@
 
         .memo-badge { font-size: 9px; font-weight: 500; background: #f1f5f9; color: #475569; padding: 1px 2px; border-radius: 2px; text-align: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; border: 1px solid #e2e8f0; margin-top: auto; width: 100%; }
 
-        .calendar-bottom-info { padding: 4px 12px; font-size: 13px; font-weight: 700; color: #0369a1; background: #ffffff; display: flex; align-items: center; gap: 6px; min-height: 32px; border-top: 1px solid #f1f5f9; }
+        .calendar-bottom-info { padding: 4px 12px; font-size: 13px; font-weight: 700; color: #0369a1; background: #ffffff; display: flex; align-items: center; gap: 6px; min-height: 28px; max-height: 28px; border-top: 1px solid #f1f5f9; flex-shrink: 0; }
         .calendar-bottom-info span { color: #334155; font-weight: 600; font-size: 13px; }
 
-        .action-panel { background: #1e293b; padding: 8px 12px; display: flex; flex-direction: column; gap: 6px; }
+        .action-panel { background: #1e293b; padding: 8px 12px; display: flex; flex-direction: column; gap: 6px; flex-shrink: 0; }
         .button-group { display: grid; grid-template-columns: 2fr 2fr 2fr 1fr; gap: 6px; align-items: center; }
         .action-btn { background: #334155; color: white; border: none; padding: 10px 0; border-radius: 8px; font-size: 14px; font-weight: 700; cursor: pointer; text-align: center; }
         .action-btn:active { background: #475569; }
@@ -118,18 +113,11 @@
 
     <div class="app-header">공수 계산기</div>
 
-    <div class="calendar-wrapper">
+    <div class="calendar-wrapper" id="calendar-wrapper">
         <div class="calendar-nav">
-            <div class="calendar-nav-left">
-                <button onclick="changeMonth(-1)">◀ 이전</button>
-            </div>
-            <div style="flex: 1; display: flex; justify-content: center;">
-                <span id="month-year" onclick="openDatePickerModal()">2026년 7월</span>
-            </div>
-            <div class="calendar-nav-right">
-                <button onclick="goToToday()">오늘</button>
-                <button onclick="changeMonth(1)">다음 ▶</button>
-            </div>
+            <div></div>
+            <span id="month-year" onclick="openDatePickerModal()">2026년 7월</span>
+            <button onclick="goToToday()">오늘</button>
         </div>
 
         <div class="weekdays">
@@ -271,6 +259,31 @@
 
     let tempSelectedYear = yToday;
     let tempSelectedMonth = todayObj.getMonth();
+
+    // 터치 스와이프 구현을 위한 변수
+    let touchStartX = 0;
+    let touchEndX = 0;
+
+    const calendarWrapper = document.getElementById('calendar-wrapper');
+    calendarWrapper.addEventListener('touchstart', e => {
+        touchStartX = e.changedTouches[0].screenX;
+    }, {passive: true});
+
+    calendarWrapper.addEventListener('touchend', e => {
+        touchEndX = e.changedTouches[0].screenX;
+        handleSwipe();
+    }, {passive: true});
+
+    function handleSwipe() {
+        let threshold = 50; // 스와이프 인식 최소 거리 (px)
+        if (touchEndX < touchStartX - threshold) {
+            // 왼쪽으로 밀었을 때 -> 다음 달
+            changeMonth(1);
+        } else if (touchEndX > touchStartX + threshold) {
+            // 오른쪽으로 밀었을 때 -> 이전 달
+            changeMonth(-1);
+        }
+    }
 
     function getSolarHolidays(year) {
         return {
