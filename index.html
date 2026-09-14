@@ -415,9 +415,35 @@
         return substitutes;
     }
 
+    // === 정기 선거일 ===
+    // 임기가 고정 주기인 선거는 공직선거법의 계산식으로 정확히 계산 가능 (법 조문 기준 검증 완료):
+    // - 국회의원 총선거: 임기만료일(5/29) 전 50일 이후 첫 번째 수요일 → 4년 주기 (2024.4.10, 2028.4.12로 검증)
+    // - 전국동시지방선거: 임기만료일(6/30) 전 30일 이후 첫 번째 수요일 → 4년 주기 (2022.6.1, 2026.6.3으로 검증)
+    // ※ 대통령선거는 2025년 조기대선(탄핵)으로 임기 주기가 리셋되어, 차기 정기 대선일이
+    //   아직 공식 확정 전까지는 불확실성이 있음 → 정기 계산 대신 아래 JSON(임시공휴일/선거일)에서 관리.
+    function firstWednesdayOnOrAfter(year, month, day) {
+        let d = new Date(year, month - 1, day);
+        while (d.getDay() !== 3) { // 0=일요일 ... 3=수요일
+            d.setDate(d.getDate() + 1);
+        }
+        return d;
+    }
+
+    function getRegularElectionHolidays(year) {
+        let result = {};
+        if ((year - 2024) % 4 === 0) {
+            result[formatDateKey(firstWednesdayOnOrAfter(year, 4, 9))] = "국회의원선거일";
+        }
+        if ((year - 2022) % 4 === 0) {
+            result[formatDateKey(firstWednesdayOnOrAfter(year, 5, 31))] = "전국동시지방선거일";
+        }
+        return result;
+    }
+
     // === 임시공휴일 / 선거일(쉬는날) — 계산 불가능한 값만 GitHub JSON으로 오버레이 ===
     // 이 둘은 예측 불가능해서 API/키 없이는 알 수 없음. 대신 공개 정적 JSON 파일을 fetch.
-    // 형식 예: { "2026-08-14": "임시공휴일" }
+    // (정기 국회의원선거/지방선거는 위에서 공식으로 이미 계산되므로 여기 넣을 필요 없음)
+    // 형식 예: { "2026-08-14": "임시공휴일", "2030-03-06": "대통령선거일" }
     // TODO: 실제 GitHub 저장소를 만든 뒤 아래 주소를 raw 파일 주소로 교체하세요.
     const HOLIDAYS_EXTRA_URL = "https://raw.githubusercontent.com/사용자명/저장소명/main/holidays-extra.json";
     let extraHolidayCache = JSON.parse(localStorage.getItem('extraHolidayCache')) || {};
@@ -459,9 +485,10 @@
     function getHolidaysForYear(year) {
         let solar = getSolarHolidays(year);
         let lunar = getLunarHolidays(year);
+        let elections = getRegularElectionHolidays(year);
         let extra = getExtraHolidaysForYear(year);
-        let substitutes = calcSubstituteHolidays(year, solar, lunar, extra);
-        return { ...solar, ...lunar, ...extra, ...substitutes };
+        let substitutes = calcSubstituteHolidays(year, solar, lunar, { ...elections, ...extra });
+        return { ...solar, ...lunar, ...elections, ...extra, ...substitutes };
     }
 
     function openSettingsModal() {
