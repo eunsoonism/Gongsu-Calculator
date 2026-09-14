@@ -343,12 +343,23 @@
     const HOLIDAY_CACHE_MAX_AGE = 1000 * 60 * 60 * 24 * 7; // 7일마다 재확인
 
     function getHolidaysForYear(year) {
+        // 신정/삼일절/어린이날/현충일/광복절/개천절/한글날/크리스마스처럼 법으로 날짜가 고정된 공휴일과
+        // 설날/추석/부처님오신날(하드코딩된 연도 한정)은 우리가 확실히 아는 값이라 항상 우선(권위) 데이터로 사용.
+        let authoritative = { ...getSolarHolidays(year), ...getLunarHolidays(year) };
+
         let cached = holidayCache[year];
-        if (cached && cached.data) {
-            return cached.data;
+        if (!cached || !cached.data) {
+            return authoritative; // 아직 API를 못 받아왔으면 확실히 아는 것만 표시
         }
-        // 아직 API로 못 받아온 해는 하드코딩 백업 데이터로 우선 표시
-        return { ...getSolarHolidays(year), ...getLunarHolidays(year) };
+
+        // API 데이터 중 우리가 이미 확실히 아는 날짜와 겹치는 건 무시(권위 데이터 유지),
+        // 겹치지 않는 나머지 날짜만 '대체공휴일'로 표시 (API가 주는 이름은 신뢰하지 않음)
+        let merged = { ...authoritative };
+        Object.keys(cached.data).forEach(dateKey => {
+            if (merged[dateKey]) return;
+            merged[dateKey] = "대체공휴일";
+        });
+        return merged;
     }
 
     function ensureHolidaysFresh(year) {
