@@ -445,7 +445,7 @@
     // (정기 국회의원선거/지방선거는 위에서 공식으로 이미 계산되므로 여기 넣을 필요 없음)
     // 형식 예: { "2026-08-14": "임시공휴일", "2030-03-06": "대통령선거일" }
     // TODO: 실제 GitHub 저장소를 만든 뒤 아래 주소를 raw 파일 주소로 교체하세요.
-    const HOLIDAYS_EXTRA_URL = "https://raw.githubusercontent.com/사용자명/저장소명/main/holidays-extra.json";
+    const HOLIDAYS_EXTRA_URL = "https://raw.githubusercontent.com/eunsoonism/Gongsu-Calculator/refs/heads/main/holidays-extra.json";
     let extraHolidayCache = JSON.parse(localStorage.getItem('extraHolidayCache')) || {};
     let extraHolidayFetching = false;
     const EXTRA_HOLIDAY_MAX_AGE = 1000 * 60 * 60 * 24; // 하루 1회만 재확인
