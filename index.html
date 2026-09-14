@@ -264,6 +264,9 @@
         </div>
     </div>
 
+<!-- 음력↔양력 변환: 한국천문연구원(KASI) 데이터 기반, MIT 라이선스, 오프라인 동작 -->
+<script src="https://cdn.jsdelivr.net/npm/kor-lunar@1.7/dist/kor-lunar.min.js"></script>
+
 <script>
     let initialWorkData = {};
 
@@ -318,76 +321,147 @@
         }
     }
 
-    // 기존 하드코딩 데이터는 오프라인이거나 API 요청 실패 시 사용할 백업 데이터로 유지
+    // === ① 고정 날짜 공휴일 ===
+    // 법으로 날짜가 못박혀 있어 매년 동일 → 하드코딩이 정답.
+    // 2026-07-17부터 제헌절이 18년 만에 공휴일로 재지정됨(2026.5.11 시행) → 2026년부터 포함.
     function getSolarHolidays(year) {
-        return {
+        let holidays = {
             [`${year}-01-01`]: "신정", [`${year}-03-01`]: "삼일절", [`${year}-05-05`]: "어린이날",
             [`${year}-06-06`]: "현충일", [`${year}-08-15`]: "광복절", [`${year}-10-03`]: "개천절",
             [`${year}-10-09`]: "한글날", [`${year}-12-25`]: "크리스마스"
         };
-    }
-
-    function getLunarHolidays(year) {
-        const lunarMap = {
-            2026: { "2026-02-16": "설날연휴", "2026-02-17": "설날", "2026-02-18": "설날연휴", "2026-05-24": "부처님오신날", "2026-09-24": "추석연휴", "2026-09-25": "추석", "2026-09-26": "추석연휴" },
-            2027: { "2027-02-06": "설날연휴", "2027-02-07": "설날", "2027-02-08": "설날연휴", "2027-05-13": "부처님오신날", "2027-09-14": "추석연휴", "2027-09-15": "추석", "2027-09-16": "추석연휴" },
-            2028: { "2028-01-25": "설날연휴", "2028-01-26": "설날", "2028-01-27": "설날연휴", "2028-05-02": "부처님오신날", "2028-10-02": "추석연휴", "2028-10-03": "추석", "2028-10-04": "추석연휴" }
-        };
-        return lunarMap[year] || {};
-    }
-
-    // === 공휴일 자동 갱신 (대체공휴일 포함) ===
-    // Nager.Date 공개 API에서 그 해의 공식 공휴일(대체공휴일 포함)을 받아와 캐싱.
-    let holidayCache = JSON.parse(localStorage.getItem('holidayCache')) || {};
-    let holidayFetchingYears = new Set();
-    const HOLIDAY_CACHE_MAX_AGE = 1000 * 60 * 60 * 24 * 7; // 7일마다 재확인
-
-    function getHolidaysForYear(year) {
-        // 신정/삼일절/어린이날/현충일/광복절/개천절/한글날/크리스마스처럼 법으로 날짜가 고정된 공휴일과
-        // 설날/추석/부처님오신날(하드코딩된 연도 한정)은 우리가 확실히 아는 값이라 항상 우선(권위) 데이터로 사용.
-        let authoritative = { ...getSolarHolidays(year), ...getLunarHolidays(year) };
-
-        let cached = holidayCache[year];
-        if (!cached || !cached.data) {
-            return authoritative; // 아직 API를 못 받아왔으면 확실히 아는 것만 표시
+        if (year >= 2026) {
+            holidays[`${year}-07-17`] = "제헌절";
         }
-
-        // API 데이터 중 우리가 이미 확실히 아는 날짜와 겹치는 건 무시(권위 데이터 유지),
-        // 겹치지 않는 나머지 날짜만 '대체공휴일'로 표시 (API가 주는 이름은 신뢰하지 않음)
-        let merged = { ...authoritative };
-        Object.keys(cached.data).forEach(dateKey => {
-            if (merged[dateKey]) return;
-            merged[dateKey] = "대체공휴일";
-        });
-        return merged;
+        return holidays;
     }
 
-    function ensureHolidaysFresh(year) {
-        let cached = holidayCache[year];
-        let isStale = !cached || (Date.now() - cached.fetchedAt) > HOLIDAY_CACHE_MAX_AGE;
-        if (!isStale || holidayFetchingYears.has(year)) return;
+    // === ② 명절(설날/추석/부처님오신날) ===
+    // 음력→양력 변환은 kor-lunar 라이브러리(KASI 데이터 기반, 1890~2050 지원)로 계산.
+    // 설날(음1/1)·추석(음8/15)의 "연휴"는 하루 전날과 다음날을 포함.
+    function getLunarHolidays(year) {
+        let result = {};
+        function put(dateObj, name) {
+            let y = dateObj.getFullYear();
+            let m = String(dateObj.getMonth() + 1).padStart(2, '0');
+            let d = String(dateObj.getDate()).padStart(2, '0');
+            result[`${y}-${m}-${d}`] = name;
+        }
+        try {
+            let seollal = window.korLunar.toSolar(year, 1, 1);
+            let seollalDate = new Date(seollal.year, seollal.month - 1, seollal.day);
+            let prev = new Date(seollalDate); prev.setDate(seollalDate.getDate() - 1);
+            let next = new Date(seollalDate); next.setDate(seollalDate.getDate() + 1);
+            put(prev, "설날연휴"); put(seollalDate, "설날"); put(next, "설날연휴");
 
-        holidayFetchingYears.add(year);
-        fetch(`https://date.nager.at/api/v3/PublicHolidays/${year}/KR`)
+            let chuseok = window.korLunar.toSolar(year, 8, 15);
+            let chuseokDate = new Date(chuseok.year, chuseok.month - 1, chuseok.day);
+            let cPrev = new Date(chuseokDate); cPrev.setDate(chuseokDate.getDate() - 1);
+            let cNext = new Date(chuseokDate); cNext.setDate(chuseokDate.getDate() + 1);
+            put(cPrev, "추석연휴"); put(chuseokDate, "추석"); put(cNext, "추석연휴");
+
+            let buddha = window.korLunar.toSolar(year, 4, 8);
+            put(new Date(buddha.year, buddha.month - 1, buddha.day), "부처님오신날");
+        } catch (e) {
+            // 라이브러리 로드 실패 또는 지원 범위(1890~2050) 밖인 경우 조용히 무시
+            console.warn('음력 변환 실패:', e);
+        }
+        return result;
+    }
+
+    function formatDateKey(dateObj) {
+        let y = dateObj.getFullYear();
+        let m = String(dateObj.getMonth() + 1).padStart(2, '0');
+        let d = String(dateObj.getDate()).padStart(2, '0');
+        return `${y}-${m}-${d}`;
+    }
+
+    // === ③ 대체공휴일 ===
+    // 관공서의 공휴일에 관한 규정에 따라 직접 계산 (외부 API 불필요).
+    // 대상: 신정·현충일만 제외, 나머지 전부 대상 (2023.5월부터 부처님오신날·크리스마스도 포함).
+    // 요일 조건: 설날/추석연휴 그룹은 "일요일"과 겹칠 때만 대체, 그 외는 "토/일요일" 모두 대체.
+    const SUNDAY_ONLY_NAMES = ["설날연휴", "설날", "추석연휴", "추석"];
+    const NO_SUBSTITUTE_NAMES = ["신정", "현충일"];
+
+    function calcSubstituteHolidays(year, solar, lunar, extra) {
+        let base = { ...solar, ...lunar };
+        let occupied = new Set([...Object.keys(base), ...Object.keys(extra)]);
+        let substitutes = {};
+
+        Object.keys(base).sort().forEach(dateKey => {
+            let name = base[dateKey];
+            if (NO_SUBSTITUTE_NAMES.includes(name)) return;
+
+            let [y, m, d] = dateKey.split('-').map(Number);
+            let dateObj = new Date(y, m - 1, d);
+            let dow = dateObj.getDay(); // 0=일, 6=토
+
+            let needsSubstitute = SUNDAY_ONLY_NAMES.includes(name) ? (dow === 0) : (dow === 0 || dow === 6);
+            if (!needsSubstitute) return;
+
+            let candidate = new Date(dateObj);
+            do {
+                candidate.setDate(candidate.getDate() + 1);
+            } while (
+                candidate.getDay() === 0 || candidate.getDay() === 6 ||
+                occupied.has(formatDateKey(candidate))
+            );
+
+            let key = formatDateKey(candidate);
+            substitutes[key] = "대체공휴일";
+            occupied.add(key);
+        });
+
+        return substitutes;
+    }
+
+    // === 임시공휴일 / 선거일(쉬는날) — 계산 불가능한 값만 GitHub JSON으로 오버레이 ===
+    // 이 둘은 예측 불가능해서 API/키 없이는 알 수 없음. 대신 공개 정적 JSON 파일을 fetch.
+    // 형식 예: { "2026-08-14": "임시공휴일" }
+    // TODO: 실제 GitHub 저장소를 만든 뒤 아래 주소를 raw 파일 주소로 교체하세요.
+    const HOLIDAYS_EXTRA_URL = "https://raw.githubusercontent.com/사용자명/저장소명/main/holidays-extra.json";
+    let extraHolidayCache = JSON.parse(localStorage.getItem('extraHolidayCache')) || {};
+    let extraHolidayFetching = false;
+    const EXTRA_HOLIDAY_MAX_AGE = 1000 * 60 * 60 * 24; // 하루 1회만 재확인
+
+    function ensureExtraHolidaysFresh() {
+        let isStale = !extraHolidayCache.fetchedAt || (Date.now() - extraHolidayCache.fetchedAt) > EXTRA_HOLIDAY_MAX_AGE;
+        if (!isStale || extraHolidayFetching) return;
+
+        extraHolidayFetching = true;
+        fetch(HOLIDAYS_EXTRA_URL)
             .then(res => {
-                if (!res.ok) throw new Error('공휴일 API 응답 오류');
+                if (!res.ok) throw new Error('임시공휴일 JSON 응답 오류');
                 return res.json();
             })
-            .then(list => {
-                let map = {};
-                list.forEach(item => {
-                    map[item.date] = item.localName || item.name;
-                });
-                holidayCache[year] = { data: map, fetchedAt: Date.now() };
-                localStorage.setItem('holidayCache', JSON.stringify(holidayCache));
+            .then(data => {
+                extraHolidayCache = { data: data, fetchedAt: Date.now() };
+                localStorage.setItem('extraHolidayCache', JSON.stringify(extraHolidayCache));
                 renderCalendar();
             })
             .catch(() => {
-                // 실패 시 하드코딩 백업 데이터 그대로 사용 (조용히 무시)
+                // 실패 시 조용히 무시 (캐시된 값 또는 빈 값 유지)
             })
             .finally(() => {
-                holidayFetchingYears.delete(year);
+                extraHolidayFetching = false;
             });
+    }
+
+    function getExtraHolidaysForYear(year) {
+        let data = (extraHolidayCache && extraHolidayCache.data) ? extraHolidayCache.data : {};
+        let filtered = {};
+        Object.keys(data).forEach(key => {
+            if (key.startsWith(`${year}-`)) filtered[key] = data[key];
+        });
+        return filtered;
+    }
+
+    function getHolidaysForYear(year) {
+        let solar = getSolarHolidays(year);
+        let lunar = getLunarHolidays(year);
+        let extra = getExtraHolidaysForYear(year);
+        let substitutes = calcSubstituteHolidays(year, solar, lunar, extra);
+        return { ...solar, ...lunar, ...extra, ...substitutes };
     }
 
     function openSettingsModal() {
@@ -439,9 +513,7 @@
 
         document.getElementById('month-year').innerText = `${year}년 ${month + 1}월`;
 
-        ensureHolidaysFresh(year);
-        if (month === 0) ensureHolidaysFresh(year - 1);
-        if (month === 11) ensureHolidaysFresh(year + 1);
+        ensureExtraHolidaysFresh();
 
         const firstDayIndex = new Date(year, month, 1).getDay();
         const lastDay = new Date(year, month + 1, 0).getDate();
