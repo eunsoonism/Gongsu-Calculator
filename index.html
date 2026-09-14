@@ -53,8 +53,9 @@
         .day-cell.selected { background: #e0f2fe; }
         .day-cell.selected .day-number { color: #0369a1; font-weight: 800; }
 
-        .holiday-name { font-size: 9px; color: #ef4444; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding: 0 1px; letter-spacing: -0.5px; }
+        .holiday-name { font-size: clamp(8px, 2.3vw, 13px); color: #ef4444; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding: 0 1px; letter-spacing: -0.5px; }
         .work-badge { font-size: 10px; font-weight: 700; background: #dcfce7; color: #15803d; padding: 1px 0; border-radius: 2px; text-align: center; width: 100%; }
+        .work-badge.mode-daily { background: #fef3c7; color: #b45309; }
         
         .pay-badge { 
             font-size: 11px; 
@@ -69,6 +70,7 @@
             white-space: nowrap; 
             letter-spacing: -0.5px; 
         }
+        .pay-badge.mode-daily { background: #fffbeb; color: #b45309; border: 1px solid #fde68a; }
 
         .memo-badge { font-size: 8px; font-weight: 500; background: #f1f5f9; color: #475569; padding: 1px 2px; border-radius: 2px; text-align: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; border: 1px solid #e2e8f0; margin-top: auto; width: 100%; }
 
@@ -117,6 +119,12 @@
         .date-picker-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin: 6px 0; }
         .date-picker-btn { background: #0f172a; border: 1px solid #475569; color: white; padding: 10px 0; border-radius: 6px; font-size: 14px; font-weight: bold; cursor: pointer; text-align: center; }
         .date-picker-btn:active, .date-picker-btn.selected { background: #3b82f6; border-color: #3b82f6; }
+
+        .mode-select-btn { padding: 10px 0; border-radius: 6px; font-size: 14px; font-weight: bold; cursor: pointer; text-align: center; border: 1px solid transparent; }
+        .mode-select-btn.hourly { background: #dcfce7; color: #15803d; }
+        .mode-select-btn.hourly.selected { background: #15803d; color: white; border-color: #15803d; }
+        .mode-select-btn.daily { background: #fef3c7; color: #b45309; }
+        .mode-select-btn.daily.selected { background: #b45309; color: white; border-color: #b45309; }
     </style>
 </head>
 <body>
@@ -240,8 +248,8 @@
             <h3>계산 방식 설정</h3>
             <div style="font-size: 12px; color: #94a3b8;">지금부터 입력하는 날짜에 적용될 방식을 선택하세요. (이미 저장된 날짜는 바뀌지 않아요)</div>
             <div class="date-picker-grid" style="grid-template-columns: repeat(2, 1fr);">
-                <div class="date-picker-btn" id="mode-btn-hourly" onclick="selectMode('hourly')">시급</div>
-                <div class="date-picker-btn" id="mode-btn-daily" onclick="selectMode('daily')">일당</div>
+                <div class="mode-select-btn hourly" id="mode-btn-hourly" onclick="selectMode('hourly')">시급</div>
+                <div class="mode-select-btn daily" id="mode-btn-daily" onclick="selectMode('daily')">일당</div>
             </div>
         </div>
     </div>
@@ -310,6 +318,7 @@
         }
     }
 
+    // 기존 하드코딩 데이터는 오프라인이거나 API 요청 실패 시 사용할 백업 데이터로 유지
     function getSolarHolidays(year) {
         return {
             [`${year}-01-01`]: "신정", [`${year}-03-01`]: "삼일절", [`${year}-05-05`]: "어린이날",
@@ -325,6 +334,49 @@
             2028: { "2028-01-25": "설날연휴", "2028-01-26": "설날", "2028-01-27": "설날연휴", "2028-05-02": "부처님오신날", "2028-10-02": "추석연휴", "2028-10-03": "추석", "2028-10-04": "추석연휴" }
         };
         return lunarMap[year] || {};
+    }
+
+    // === 공휴일 자동 갱신 (대체공휴일 포함) ===
+    // Nager.Date 공개 API에서 그 해의 공식 공휴일(대체공휴일 포함)을 받아와 캐싱.
+    let holidayCache = JSON.parse(localStorage.getItem('holidayCache')) || {};
+    let holidayFetchingYears = new Set();
+    const HOLIDAY_CACHE_MAX_AGE = 1000 * 60 * 60 * 24 * 7; // 7일마다 재확인
+
+    function getHolidaysForYear(year) {
+        let cached = holidayCache[year];
+        if (cached && cached.data) {
+            return cached.data;
+        }
+        // 아직 API로 못 받아온 해는 하드코딩 백업 데이터로 우선 표시
+        return { ...getSolarHolidays(year), ...getLunarHolidays(year) };
+    }
+
+    function ensureHolidaysFresh(year) {
+        let cached = holidayCache[year];
+        let isStale = !cached || (Date.now() - cached.fetchedAt) > HOLIDAY_CACHE_MAX_AGE;
+        if (!isStale || holidayFetchingYears.has(year)) return;
+
+        holidayFetchingYears.add(year);
+        fetch(`https://date.nager.at/api/v3/PublicHolidays/${year}/KR`)
+            .then(res => {
+                if (!res.ok) throw new Error('공휴일 API 응답 오류');
+                return res.json();
+            })
+            .then(list => {
+                let map = {};
+                list.forEach(item => {
+                    map[item.date] = item.localName || item.name;
+                });
+                holidayCache[year] = { data: map, fetchedAt: Date.now() };
+                localStorage.setItem('holidayCache', JSON.stringify(holidayCache));
+                renderCalendar();
+            })
+            .catch(() => {
+                // 실패 시 하드코딩 백업 데이터 그대로 사용 (조용히 무시)
+            })
+            .finally(() => {
+                holidayFetchingYears.delete(year);
+            });
     }
 
     function openSettingsModal() {
@@ -376,6 +428,10 @@
 
         document.getElementById('month-year').innerText = `${year}년 ${month + 1}월`;
 
+        ensureHolidaysFresh(year);
+        if (month === 0) ensureHolidaysFresh(year - 1);
+        if (month === 11) ensureHolidaysFresh(year + 1);
+
         const firstDayIndex = new Date(year, month, 1).getDay();
         const lastDay = new Date(year, month + 1, 0).getDate();
         const prevLastDay = new Date(year, month, 0).getDate();
@@ -412,9 +468,8 @@
         cell.className = 'day-cell';
         if (isOtherMonth) cell.classList.add('other-month');
 
-        let solarHolidays = getSolarHolidays(y);
-        let lunarHolidays = getLunarHolidays(y);
-        let holidayName = solarHolidays[dateKey] || lunarHolidays[dateKey];
+        let holidaysOfYear = getHolidaysForYear(y);
+        let holidayName = holidaysOfYear[dateKey];
 
         if (dayOfWeek === 0 || holidayName) {
             cell.classList.add('is-holiday');
@@ -453,7 +508,7 @@
         if (workData[dateKey] !== undefined && parseFloat(workData[dateKey]) > 0) {
             let manDays = parseFloat(workData[dateKey]);
             let badge = document.createElement('div');
-            badge.className = 'work-badge';
+            badge.className = getModeForDate(dateKey) === 'daily' ? 'work-badge mode-daily' : 'work-badge';
             badge.innerText = manDays;
             cell.appendChild(badge);
 
@@ -471,7 +526,7 @@
                 }
 
                 let payBadge = document.createElement('div');
-                payBadge.className = 'pay-badge';
+                payBadge.className = getModeForDate(dateKey) === 'daily' ? 'pay-badge mode-daily' : 'pay-badge';
                 payBadge.innerText = dayPay.toLocaleString();
                 cell.appendChild(payBadge);
             }
