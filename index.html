@@ -268,7 +268,6 @@
 <script src="https://cdn.jsdelivr.net/npm/kor-lunar@1.7/dist/kor-lunar.min.js"></script>
 
 <script>
-   
     let initialWorkData = {};
 
     let todayObj = new Date();
@@ -449,11 +448,10 @@
     const HOLIDAYS_EXTRA_URL = "https://raw.githubusercontent.com/eunsoonism/Gongsu-Calculator/refs/heads/main/holidays-extra.json";
     let extraHolidayCache = JSON.parse(localStorage.getItem('extraHolidayCache')) || {};
     let extraHolidayFetching = false;
-    const EXTRA_HOLIDAY_MAX_AGE = 1000 * 60 * 60 * 24; // 하루 1회만 재확인
+    let extraHolidayFetchedThisSession = false; // 앱을 열 때(세션당) 한 번만 새로 받아옴
 
     function ensureExtraHolidaysFresh() {
-        let isStale = !extraHolidayCache.fetchedAt || (Date.now() - extraHolidayCache.fetchedAt) > EXTRA_HOLIDAY_MAX_AGE;
-        if (!isStale || extraHolidayFetching) return;
+        if (extraHolidayFetchedThisSession || extraHolidayFetching) return;
 
         extraHolidayFetching = true;
         fetch(HOLIDAYS_EXTRA_URL)
@@ -471,6 +469,7 @@
             })
             .finally(() => {
                 extraHolidayFetching = false;
+                extraHolidayFetchedThisSession = true;
             });
     }
 
